@@ -1,6 +1,5 @@
 GEEK
 =====
-|PyPI| |Documentation Status| |Build Status| |Codecov| |Codacy branch grade| |Code climate| |license| 
 
 GEneralized Elementary Kinetics
 
@@ -17,22 +16,31 @@ Requirements
 Setup
 =====
 
+Container-based install
+-----------------------
+
+We recommend to use this package inside of the provided DOCKER container.
+See |docker|_ for the setup and use of the container.
+
+.. |docker| replace:: ``docker/``
+.. _docker: https://github.com/EPFL-LCSB/geek/tree/master/docker
+
+
+
+
+Source-based install
+-----------------------
+
 *This step is not required if you're using the container, which bundles all this.*
 
-You can install this module with ``pip``:
-
-*For Python 3, you might have to use* ``pip3`` *instead of* ``pip``
-
-.. code:: bash
-
-    pip3 install geek
-
-or from source
+If you wish not to use the container based install you can install the package from source
 
 .. code:: bash
 
     git clone https://github.com/EPFL-LCSB/pytfa.git /path/to/geek
     pip3 install -e /path/to/geek
+
+
 
 Quick start
 ===========

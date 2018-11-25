@@ -1,0 +1,2 @@
+Files that you are working with in the docker can be placed
+here so they are accessible from you local computer and the container
