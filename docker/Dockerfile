@@ -34,12 +34,6 @@ COPY requirements.txt .
 
 
 USER root
-
-# Add extra openfpm_core if needed
-RUN mkdir /src
-COPY src/ /src/
-
-# Make an alias
 RUN ln -s /usr/bin/python3 python
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt
@@ -76,6 +70,7 @@ ENV PYTHON_INCLUDE='/usr/local/include/python3.5m'
 
 ENTRYPOINT ["/bin/bash", "-c",  "source /home/user/openfpm_vars \
                                 && pip install --user -e /openbread \
-                                && pip install --user -e /geek $0 $*"]
+                                && pip install --user -e /geek \
+                                && $0 $*"]
 
 CMD /bin/bash
