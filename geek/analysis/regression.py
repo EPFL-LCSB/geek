@@ -57,7 +57,7 @@ def geek_regression(df,
     ols_resid = DataFrame(dict(fittedvalues=ols_result.fittedvalues,
                                residuals=ols_result.resid))
 
-    # Group the values by their residual with in relative accuacy of 0.1
+    # Group the values by their fitted value -> split in 10 groups
     ols_resid['value_groups'] = (ols_resid['fittedvalues'] / max(abs(ols_resid['fittedvalues']))).round(1)
 
     # Calculate the conditional standard deviation of the fitted values

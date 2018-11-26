@@ -30,7 +30,7 @@ from geek.analysis import geek_regression
 
 df = read_csv('../data/result_full_factorial_pgm.csv')
 
-# Reference conetrations
+# Reference concentrations
 pgm = 64e-6
 g3p = 49e-6
 g2p = g3p
@@ -46,6 +46,7 @@ concentrations = ['enzyme_complex_concentration',
 this_volume_fraction = 0.1
 this_mu              = 31.9
 this_sigma           = 0.825
+
 this_df = df [ (df['sigma_mass'] == this_sigma) &
                (df['mu_mass']    == this_mu) &
                (df['volume_fraction'] == this_volume_fraction)]
