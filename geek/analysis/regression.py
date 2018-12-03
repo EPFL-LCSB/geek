@@ -33,7 +33,8 @@ def geek_regression(df,
                     concentrations,
                     reference_concentrations,
                     rate_constant,
-                    verbose=True):
+                    verbose=True,
+                    confidence_level=0.05):
     """
 
     :param df: dataframe with measured rate constant data
@@ -77,18 +78,32 @@ def geek_regression(df,
         print(this_result.summary())
 
     # Data for the
-    data = {'rate_constant': rate_constant,
-            'beta': this_result.params['const'],
-            'lb_beta': this_result.conf_int(0.05)[0]['const'],
-            'ub_beta': this_result.conf_int(0.05)[1]['const'],
-            'p_beta': this_result.pvalues['const'],
-            }
+    if this_result.pvalues['const'] < confidence_level:
+        data = {'rate_constant': rate_constant,
+                'beta': this_result.params['const'],
+                'lb_beta': this_result.conf_int(0.05)[0]['const'],
+                'ub_beta': this_result.conf_int(0.05)[1]['const'],
+                'p_beta': this_result.pvalues['const'],
+                }
+    else:
+        data = {'rate_constant': rate_constant,
+                'beta': .0,
+                'lb_beta': .0,
+                'ub_beta': .0,
+                'p_beta': this_result.pvalues['const'],
+                }
 
     for this_conc in concentrations:
-        data['alpha_{}_{}'.format(this_conc,rate_constant)] = this_result.params[this_conc]
-        data['lb_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.conf_int(0.05)[0][this_conc]
-        data['ub_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.conf_int(0.05)[1][this_conc]
-        data['p_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.pvalues[this_conc]
+        if this_result.pvalues[this_conc] < confidence_level:
+            data['alpha_{}_{}'.format(this_conc,rate_constant)] = this_result.params[this_conc]
+            data['lb_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.conf_int(0.05)[0][this_conc]
+            data['ub_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.conf_int(0.05)[1][this_conc]
+            data['p_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.pvalues[this_conc]
+        else:
+            data['alpha_{}_{}'.format(this_conc,rate_constant)] = .0
+            data['lb_alpha_{}_{}'.format(this_conc, rate_constant)] = .0
+            data['ub_alpha_{}_{}'.format(this_conc, rate_constant)] = .0
+            data['p_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.pvalues[this_conc]
 
     return data
 
