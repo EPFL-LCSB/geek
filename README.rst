@@ -10,7 +10,9 @@ bioRxiv 429316; doi: `https://doi.org/10.1101/429316`_
 Requirements
 ------------
 
-**This module was developed in Python 3.5, and it is recommended to run Python 3.5 
+**This module was developed in Python 3.5, and it is recommended to run Python 3.5
+
+This module requires as working installation of openbread.
 
 
 Setup
@@ -27,9 +29,8 @@ See |docker|_ for the setup and use of the container.
 
 
 
-
 Source-based install
------------------------
+--------------------
 
 *This step is not required if you're using the container, which bundles all this.*
 
@@ -42,17 +43,19 @@ If you wish not to use the container based install you can install the package f
 
 
 
-Quick start
-===========
+Examples and Validation
+=======================
 
-A simple example can be found at:
+You find examples of the analysis performed in the paper:
 
 ::
 
     geek
     ├── data
-    └── examples
-        └── geek_example_analysis_pgm.py
+    └── paper
+        ├── geek_example_analysis_pgm.py
+        ├── geek_qssa_example.py
+        └── geek_validation_dissociation_association.py
 
    
 License

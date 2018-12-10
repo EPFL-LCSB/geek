@@ -52,8 +52,12 @@ this_df = df [ (df['sigma_mass'] == this_sigma) &
                (df['volume_fraction'] == this_volume_fraction)]
 
 
+# Extract the GEEK parameters from Linear regression
 geek_parameters = geek_regression(this_df,
                                   concentrations,
                                   reference_concentrations,
                                   'k1_bwd_relative',
                                   verbose=True)
+
+
+# Run ODE-Simulation using the extracted parameters

@@ -31,9 +31,12 @@ from ecell4 import species_attributes, reaction_rules, get_model
 
 """
 The following script shall provide a validation of GEEK and the brownian reaction dynamics by comparing its results with 
-other approaches
-for uni-molecular and for bi-molecular reaction
+other approaches for uni-molecular and for bi-molecular reaction
+
+The simulations are conduced using a single sized crowding size for an efficient comparison with the ecell4 BRD
+and the EGFRD 
 """
+
 
 """
 Diffusion limited conditions
@@ -61,6 +64,17 @@ parameters = {
 }
 
 
+# Run 10 openbread simulation
+
+# Run 10 gfrd simulation (ecell)
+
+# Run 10 BRD simulation (ecell)
+
+# Run 10 GEEK simulations
+
+# Plot the simulations
+
+
 
 
 """
@@ -86,7 +100,18 @@ parameters = {
     'volume': 10e-18,   # L
     't_max': 1e-6,      # s
     'dt': 0.25e-9,      # s
+    'mu_mass': 31.9     # s
 }
+
+# Run 10 openbread simulation
+
+# Run 10 gfrd simulation (ecell)
+
+# Run 10 BRD simulation (ecell)
+
+# Run 10 GEEK simulations
+
+# Plot the simulations
 
 
 
@@ -104,14 +129,24 @@ def ecell4_gfrd_simulation(parameters,phi= 0.0):
         A | {'D': parameters['D_A'],  'radius':  parameters['r_A']}
         B | {'D': parameters['D_B'],  'radius':  parameters['r_B']}
         C | {'D': parameters['D_C'],  'radius':  parameters['r_C']}
+        if phi > 0:
+            crw | {'D': calc_diffusion(parameters['mu_mass']),
+                   'radius': calc_radius(parameters['mu_mass'])}
 
     with reaction_rules():
         A + B == C | (parameters['k_fwd'],parameters['k_fwd']*parameters['K_eq'])
 
     m = get_model()
 
-    w= EGFRDWorld()
+    a = parameters['volume']**(1/3)
+    w= EGFRDWorld(Real3(a, a, a))
     w.bind_to(m)
+
+    # Add the species in the concentrations
+
+    # Add crowding species
+    if phi > 0:
+        pass
 
     obs = FixedIntervalNumberObserver(parameters['dt'], ['A', 'B', 'C'])
     sim = EGFRDSimulator(w)
@@ -126,13 +161,23 @@ def ecell4_brd_simulation(parameters,phi=0.0):
         A | {'D': parameters['D_A'], 'radius': parameters['r_A']}
         B | {'D': parameters['D_B'], 'radius': parameters['r_B']}
         C | {'D': parameters['D_C'], 'radius': parameters['r_C']}
+        if phi > 0:
+            crw | {'D': calc_diffusion(parameters['mu_mass']),
+                   'radius': calc_radius(parameters['mu_mass'])}
+
 
     with reaction_rules():
         A + B == C | (parameters['k_fwd'], parameters['k_fwd'] * parameters['K_eq'])
 
-    m = get_model()
-    w = BDWorld()
+    a = parameters['volume']**(1/3)
+    w = BDWorld(Real3(a, a, a))
     w.bind_to(m)
+
+    # Add the species in the concentrations
+
+    # Add crowding species
+    if phi > 0:
+        pass
 
     obs = FixedIntervalNumberObserver(parameters['dt'], ['A', 'B', 'C'])
     sim = BDSimulator(w)
