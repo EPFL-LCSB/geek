@@ -69,7 +69,6 @@ ENV PYTHON_INCLUDE='/usr/local/include/python3.5m'
 
 
 ENTRYPOINT ["/bin/bash", "-c",  "source /home/user/openfpm_vars \
-                                && pip install --user -e /openbread \
                                 && pip install --user -e /geek \
                                 && $0 $*"]
 
