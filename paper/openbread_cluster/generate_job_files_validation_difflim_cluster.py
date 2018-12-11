@@ -229,7 +229,7 @@ def write_sbatch_file(data_frame,input_file,folder,this_id,cpu_time):
    file_obj.write("module load gcc/7.3.0 \n")
    file_obj.write("module load python/3.6.5 \n")
    file_obj.write("\n")
-   file_obj.write("source /scratch/weilandt/src/env_pymes/bin/activate \n")
+   file_obj.write("source /home/weilandt/virtual_env/openbread/bin/activate \n")
    file_obj.write("source /home/weilandt/openfpm_vars \n")
    file_obj.write("\n")
    
