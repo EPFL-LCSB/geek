@@ -4,10 +4,6 @@
 General single enzyme model to run at the cluster
 
 """
-
-from skimpy.core import *
-from skimpy.mechanisms import *
-
 import sys
 
 args = sys.argv
