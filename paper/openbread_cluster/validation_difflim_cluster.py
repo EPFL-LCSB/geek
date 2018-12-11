@@ -68,9 +68,8 @@ particle_model = ParticleModel(medium,
                                crowding,
                                volume)
 
-particle_model.add_reaction(Reaction('r1f', {A:-1,B:-1,C:1},  k1f ))
-particle_model.add_reaction(Reaction('r1b', {A: 1,B: 1,C:-1}, k1b ))
-
+particle_model.add_reaction(Reaction('r1f', {A:-1, B: -1, C:1},  k1f))
+particle_model.add_reaction(Reaction('r1b', {A: 1, B:  1, C:-1}, k1b))
 
 
 # Define initial conditions
@@ -95,12 +94,10 @@ columns = []
 df = DataFrame(columns=columns)
 
 
-map_elementray_steps = {'r1f':'k1_fwd',
-                        'r1b':'k1_bwd',}
+map_elementray_steps = {'r1f': 'k1_fwd',
+                        'r1b': 'k1_bwd'
+                        }
 
-this_reaction = this_multiscale_model.reactions.pgm
-this_elementrary_rate_constants = this_reaction.mechanism.elementary_reactions
-this_rate_constans = this_reaction.mechanism.rate_constants
 
 this_results = dict()
 this_results['realization'] = realization
@@ -111,11 +108,13 @@ this_results['A_concentration'] = A_concentration
 this_results['B_concentration'] = B_concentration
 this_results['C_concentration'] = C_concentration
 
-for field in this_elementrary_rate_constants._fields:
-    particle_result_key = getattr(this_elementrary_rate_constants,field)
-    elementary_results_key = map_elementray_steps[field]
-    rate_constant = result.effective_rate_constants[particle_result_key.__str__()]
-    rel_rate_constant = rate_constant/getattr(this_rate_constans, elementary_results_key)
+for this_reaction in map_elementray_steps.keys():
+
+    elementary_results_key = map_elementray_steps[this_reaction]
+
+    rate_constant = result.effective_rate_constants[this_reaction]
+
+    rel_rate_constant = rate_constant/particle_model.reactions[this_reaction].rate_constant
 
     this_results[elementary_results_key + '_effective'] = rate_constant
     this_results[elementary_results_key + '_relative'] = rel_rate_constant
