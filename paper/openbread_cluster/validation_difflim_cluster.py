@@ -16,9 +16,9 @@ A_concentration = float(args[5])
 B_concentration = float(args[6])
 C_concentration = float(args[7])
 
-output = args[9]
-index  = int(args[10])
-job_id = int(args[11])
+output = args[8]
+index  = int(args[9])
+job_id = int(args[10])
 
 
 """
@@ -46,7 +46,7 @@ C = Species(name = 'C',
             mass = 20 )
 
 
-species = [g3p, g2p, pgm, EC_pgm]
+species = [A, B, C, ]
 
 # Define microscopic reaction rate constants:
 k1f = 1e10       # 1/Ms
