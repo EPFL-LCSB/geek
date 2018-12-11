@@ -9,7 +9,9 @@ import numpy as np
 from scipy.integrate import quad
 import time
 import os
-from os import argv
+import sys
+
+args = sys.argv
 
 
 def mass2rad(mass):
@@ -72,11 +74,11 @@ cwd = os.getcwd()
 
 input_file = cwd+"/validation_difflim_cluster.py"
 folder = cwd+"/input_case_study_equilibrium_"+timestamp+"/"
-log_folder = argv[1]/"out_"+timestamp
+log_folder = args[1]/"out_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
 
-output = argv[1]+"/result/run_"+timestamp
+output = args[1]+"/result/run_"+timestamp
 
 job_id = "$SLURM_JOB_ID"
 
