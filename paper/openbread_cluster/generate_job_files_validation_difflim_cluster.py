@@ -52,9 +52,9 @@ volume_fractions = [0.0,0.1,0.2,0.3,0.4,0.5]
 
 
 # Reference concentrations
-A_ref = 10e-6
-B_ref = 10e-6
-C_ref = 10e-6
+A_ref = 50e-6
+B_ref = 50e-6
+C_ref = 50e-6
 
 A_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*A_ref
 B_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*B_ref
@@ -95,10 +95,9 @@ columns = ["realization",
            "volume_fraction",
            "mu_mass",
            "sigma_mass",
-           "S_concentration",
-           "P_concentration",
-           "E_concentration",
-           "ES_concentration",
+           "A_concentration",
+           "B_concentration",
+           "C_concentration",
            "data"]
 
 
