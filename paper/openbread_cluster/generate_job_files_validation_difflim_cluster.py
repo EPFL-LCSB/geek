@@ -85,7 +85,6 @@ job_id = "$SLURM_JOB_ID"
 
 
 def round_to_e5(x):
-def round_to_e5(x):
     return round(x, 5-np.int(np.floor(np.log10(np.abs(x)))))
 
 # Generate a data frame with all inputs
