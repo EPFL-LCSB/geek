@@ -74,7 +74,7 @@ cwd = os.getcwd()
 
 input_file = cwd+"/validation_difflim_cluster.py"
 folder = cwd+"/input_case_study_equilibrium_"+timestamp+"/"
-log_folder = args[1]/"out_"+timestamp
+log_folder = args[1]+"/out_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
 
