@@ -43,6 +43,15 @@ RUN cp /usr/local/openfpm_pdata/include/example.mk $HOME/example.mk
 RUN chmod -R o+rwx $HOME/example.mk
 
 
+RUN ln -s /usr/bin/python3 python
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt
+
+ENV PYTHON_INCLUDE='/usr/local/include/python3.5m'
+
+COPY install_openbread.sh .
+RUN /bin/bash ./install_openbread.sh
+
 # Make the workspace folder that will link the sources
 RUN mkdir /pymes
 
@@ -65,11 +74,8 @@ WORKDIR $HOME/work
 USER user
 
 
-ENV PYTHON_INCLUDE='/usr/local/include/python3.5m'
 
 
-COPY install_openbread.sh .
-RUN /bin/bash ./install_openbread.sh
 
 
 ENTRYPOINT ["/bin/bash", "-c",  "source /home/user/openfpm_vars \
