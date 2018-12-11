@@ -78,7 +78,8 @@ log_folder = args[1]+"/out_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
 
-output = args[1]+"/result/run_"+timestamp
+output = args[1]+"/run_"+timestamp
+os.mkdir(output)
 
 job_id = "$SLURM_JOB_ID"
 

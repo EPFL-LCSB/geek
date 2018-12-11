@@ -122,7 +122,7 @@ for this_reaction in map_elementray_steps.keys():
 
 df = df.append(this_results, ignore_index=True)
 df.to_csv(  output
-            + 'effective_rates_var_concentration_A_B_'
+            + '/effective_rates_var_concentration_A_B_'
             + 'phi_'+str(volume_fraction)+'_'
             + 'mu_'+str(mu_mass)+'_'
             + 'sigma_'+str(sigma_mass)
