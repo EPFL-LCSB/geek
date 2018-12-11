@@ -85,6 +85,7 @@ job_id = "$SLURM_JOB_ID"
 
 
 def round_to_e5(x):
+def round_to_e5(x):
     return round(x, 5-np.int(np.floor(np.log10(np.abs(x)))))
 
 # Generate a data frame with all inputs
@@ -153,7 +154,7 @@ try:
                             data_frames[this_job_file_index] = data_frames[this_job_file_index].append(this_job, ignore_index=True)
 
                             # Calcualte the number of particles
-                            n = volume*(this_product_concentration+this_substrate_concentration+conc_pgm)*AVOGADRO_NUMBER
+                            n = volume*(this_A+this_B+this_C)*AVOGADRO_NUMBER
                             if thi_sigma == 0:
                                var = this_volume_fraction*volume/(4./3.*np.pi*(mass2rad(this_mu)*1e-8)**3)
                                n += var
