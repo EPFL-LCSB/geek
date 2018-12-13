@@ -32,16 +32,16 @@ from openbread.core import *
 # Construct species in the model
 
 A = Species(name = 'A',
-            diffusion_constant = 100e-12,
+            diffusion_constant = 500e-12,
             collision_radius   = 2e-9,
             mass = 10 )
 B = Species(name = 'B',
-            diffusion_constant = 100e-12,
+            diffusion_constant = 500e-12,
             collision_radius   = 2e-9,
             mass = 10 )
 
 C = Species(name = 'C',
-            diffusion_constant = 75e-12,
+            diffusion_constant = 350e-12,
             collision_radius   = 3e-9,
             mass = 20 )
 
@@ -49,8 +49,8 @@ C = Species(name = 'C',
 species = [A, B, C, ]
 
 # Define microscopic reaction rate constants:
-k1f = 1e10       # 1/Ms
-k1b = 1e10*0.8   # 1/s
+k1f = 5e9         # 1/Ms
+k1b = 5e9*50e-6   # 1/s
 
 
 # Setup particle simulation environemnt
@@ -81,6 +81,7 @@ particle_model.initial_conditions['C'] = C_concentration
 result = particle_model.simulate(   dt=0.25e-9,
                                     max_time=1e-6,
                                     log_step=10,
+                                    n_sample=100,
                                     random_seed=realization,
                                     is_hardsphere=True,
                                     is_constant_state=True,

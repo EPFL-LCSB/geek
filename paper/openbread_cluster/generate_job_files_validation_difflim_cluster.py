@@ -30,15 +30,12 @@ def radius_distribution(radius,mu,sigma):
 
 
 def cpu_time_from_particles(n):
-   cpu_time = 100.0 + 1300*4.0/40000*n
+   cpu_time = 1000.0 + 5*3600/50000*n
    return cpu_time
 
 
 AVOGADRO_NUMBER = 6.2e23
 
-"""Set point parameters """
-conc_g3p = 50e-6
-conc_pgm = 50e-6
 
 volume = 10e-18 # (0.1 mum)^3 in L
 
@@ -219,7 +216,7 @@ def write_sbatch_file(data_frame,input_file,folder,this_id,cpu_time):
    file_obj.write("#SBATCH --workdir "+log_folder+"\n")
    file_obj.write("#SBATCH --nodes 1 \n")
    file_obj.write("#SBATCH --ntasks 28 \n")
-   file_obj.write("#SBATCH --mem 28G \n")
+   file_obj.write("#SBATCH --mem 64G \n")
 
    file_obj.write("#SBATCH --time "+str(timedelta(seconds=round(cpu_time)))+'\n')
    if debug:
@@ -230,6 +227,7 @@ def write_sbatch_file(data_frame,input_file,folder,this_id,cpu_time):
    file_obj.write("\n")
    file_obj.write("module load gcc/7.3.0 \n")
    file_obj.write("module load python/3.6.5 \n")
+   file_obj.write("module load openblas \n")
    file_obj.write("\n")
    file_obj.write("source /home/weilandt/virtual_env/openbread/bin/activate \n")
    file_obj.write("source /home/weilandt/openfpm_vars \n")
