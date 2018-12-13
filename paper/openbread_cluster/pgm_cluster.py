@@ -37,7 +37,7 @@ from openbread.core import *
 
 g3p = Species(  name = 'g3p',
                 diffusion_constant = 940e-12,
-                collision_radius   = 2e-9,
+                collision_radius   = 1.11e-9,
                 mass = 0. )
 g2p = Species(  name = 'g2p',
                 diffusion_constant = 940e-12,
