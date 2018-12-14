@@ -24,14 +24,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 """
-from ecell4 import *
-from ecell4.bd import BDWorld, BDSimulator
-from ecell4.egfrd import EGFRDWorld, EGFRDSimulator
-from ecell4.ode import ODEWorld, ODESimulator
-from ecell4.core import GSLRandomNumberGenerator
+
 
 import numpy as np
 import random
+
+from pandas import DataFrame
 
 AVOGADRO_NUMBER = 6e23
 
@@ -132,11 +130,78 @@ def geek_simulations(parameters,phi= 0.0):
     pass
 
 
-def openbread_simulation(parameters,phi= 0.0):
-    pass
+def openbread_simulation(parameters, phi= 0.0, seed=1):
+
+    from openbread.core import Species,ParticleModel,Reaction
+    # Construct species in the model
+
+    A = Species(name='A',
+                diffusion_constant=parameters['D_A'],
+                collision_radius=parameters['r_A'],
+                mass=parameters['m_A'],)
+    B = Species(name='B',
+                diffusion_constant=parameters['D_B'],
+                collision_radius=parameters['r_B'],
+                mass=parameters['m_B'],)
+
+    C = Species(name='C',
+                diffusion_constant=parameters['D_C'],
+                collision_radius=parameters['r_C'],
+                mass=parameters['m_C'],)
+
+    species = [A, B, C, ]
+
+    # Define microscopic reaction rate constants:
+    k1f = parameters['k_fwd']  # 1/Ms
+    k1b = parameters['k_fwd'] * parameters['K_eq']  # 1/s
+
+    # Setup particle simulation environemnt
+    volume = parameters['volume'] # (0.1 mum)^3 in L
+
+    medium = ParticleModel.Medium(viscosity=0.7e-3,  # Pa s
+                                  temperatur=310.15)
+
+    crowding = ParticleModel.Crowding(volume_fraction=phi,
+                                      mu=np.log(parameters['mu_mass']),
+                                      sigma=0,
+                                      max_size=10e-3)
+
+    particle_model = ParticleModel(medium,
+                                   crowding,
+                                   volume)
+
+    particle_model.add_reaction(Reaction('r1f', {A: -1, B: -1, C: 1}, k1f))
+    particle_model.add_reaction(Reaction('r1b', {A: 1, B: 1, C: -1}, k1b))
+
+    # Define initial conditions
+    particle_model.initial_conditions['A'] = parameters['A_0']
+    particle_model.initial_conditions['B'] = parameters['B_0']
+    particle_model.initial_conditions['C'] = parameters['C_0']
+
+    result = particle_model.simulate(dt=parameters['dt'],
+                                     max_time=parameters['t_max'],
+                                     log_step=10,
+                                     n_sample=0,
+                                     random_seed=seed,
+                                     is_hardsphere=True,
+                                     is_constant_state=False,
+                                     t_equlibriate=0.0)
+
+
+    # Write in a data frame
+    data = np.array([result.time, result.species['A'], result.species['B'], result.species['C'] ])
+    df = DataFrame(data=data.T, columns = ['time', 'A', 'B', 'C'])
+
+    return df
 
 
 def ecell4_gfrd_simulation(parameters,phi= 0.0, seed=1):
+    from ecell4 import Species, NetworkModel, \
+        create_binding_reaction_rule, create_unbinding_reaction_rule,\
+        Real3,FixedIntervalNumberObserver
+    from ecell4.egfrd import EGFRDWorld, EGFRDSimulator
+    from ecell4.core import GSLRandomNumberGenerator
+
     m = NetworkModel()
 
     rng = GSLRandomNumberGenerator()
@@ -192,10 +257,20 @@ def ecell4_gfrd_simulation(parameters,phi= 0.0, seed=1):
     obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
     sim = EGFRDSimulator(w)
     sim.run(parameters['t_max'], obs)
-    return np.array(obs.data())
 
+    # Write in a data frame
+    data = np.array(obs.data())
+    df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
+
+    return df
 
 def ecell4_brd_simulation(parameters,phi=0.0,seed=1):
+    from ecell4 import Species, NetworkModel, \
+        create_binding_reaction_rule, create_unbinding_reaction_rule,\
+        Real3,FixedIntervalNumberObserver
+    from ecell4.bd import BDWorld, BDSimulator
+    from ecell4.core import GSLRandomNumberGenerator
+
     m = NetworkModel()
 
     rng = GSLRandomNumberGenerator()
@@ -249,11 +324,22 @@ def ecell4_brd_simulation(parameters,phi=0.0,seed=1):
     obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
     sim = BDSimulator(w)
     sim.run(parameters['t_max'], obs)
-    return np.array(obs.data())
 
+    # Write in a data frame
+    data = np.array(obs.data())
+    df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
+
+    return df
 
 
 def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
+    from ecell4 import Species, NetworkModel, \
+        create_binding_reaction_rule, create_unbinding_reaction_rule,\
+        Real3,FixedIntervalNumberObserver
+
+    from ecell4.ode import ODEWorld, ODESimulator
+    from ecell4.core import GSLRandomNumberGenerator
+
     m = NetworkModel()
 
     rng = GSLRandomNumberGenerator()
@@ -298,160 +384,57 @@ def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
     obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
     sim = ODESimulator(w)
     sim.run(parameters['t_max'], obs)
-    return np.array(obs.data())
 
+    # Write in a data frame
+    data = np.array(obs.data())
+    df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
 
-
-
-
-"""
-Run Different simulations 
-"""
-
-import matplotlib.pyplot as plt
-
-volume_fraction = [0.0, 0.3 ,0.5]
-N_sim = 10
-
-"""
-Dilute diffusion limited 
-"""
-
-ode_data = ecell4_ode_simulation(parameters_diff_lim,phi=0.0,seed=1)
-
-results = []
-for i in range(N_sim):
-    results.append(ecell4_brd_simulation(parameters_diff_lim, phi=0.0, seed=i) )
-
-
-for data in results:
-    plt.plot(data[:,0], data[:,1] , color='grey' , alpha=0.2)
-    plt.plot(data[:, 0], data[:, 3], color='black', alpha=0.2)
-
-
-plt.plot(ode_data[:,0], ode_data[:,1] ,'--', color='grey' ,)
-plt.plot(ode_data[:, 0], ode_data[:, 3],'--' ,color='black',)
-
-plt.show()
+    return df
 
 
 
 """
-Crowded diffusion limited phi 30 % 
+Run A simulation
 """
+import sys
 
-ode_data = ecell4_ode_simulation(parameters_diff_lim,phi=0.3,seed=1)
+#if __name__ is "__main__":
 
-results = []
-for i in range(N_sim):
-    results.append(ecell4_brd_simulation(parameters_diff_lim, phi=0.3, seed=i) )
-
-
-for data in results:
-    plt.plot(data[:,0], data[:,1] , color='grey' , alpha=0.2)
-    plt.plot(data[:, 0], data[:, 3], color='black', alpha=0.2)
+param_type = sys.argv[1]
+sim_type   = sys.argv[2]
+phi        = float(sys.argv[3])
+seed       = int(sys.argv[4])
+output     = sys.argv[5]
 
 
-plt.plot(ode_data[:,0], ode_data[:,1] ,'--', color='grey' ,)
-plt.plot(ode_data[:, 0], ode_data[:, 3],'--' ,color='black',)
+if param_type == 'diff':
+    parameters = parameters_diff_lim
+elif param_type == 'react':
+    parameters = parameters_reaction_lim
+else:
+    raise ValueError('"{}" is not a valid input argument'.format(param_type))
 
-plt.show()
-
-
-
-
-
-"""
-Crowded diffusion limited phi 50 % 
-"""
-
-ode_data = ecell4_ode_simulation(parameters_diff_lim,phi=0.3,seed=1)
-
-results = []
-for i in range(N_sim):
-    results.append(ecell4_brd_simulation(parameters_diff_lim, phi=0.3, seed=i) )
-
-
-for data in results:
-    plt.plot(data[:,0], data[:,1] , color='grey' , alpha=0.2)
-    plt.plot(data[:, 0], data[:, 3], color='black', alpha=0.2)
+if sim_type == 'ode':
+    data = ecell4_ode_simulation(parameters,phi=phi,seed=seed)
+elif sim_type == 'brd':
+    data = ecell4_brd_simulation(parameters,phi=phi,seed=seed)
+elif sim_type == 'gfrd':
+    data = ecell4_gfrd_simulation(parameters,phi=phi,seed=seed)
+elif sim_type == 'openbread':
+    data = openbread_simulation(parameters,phi=phi,seed=seed)
+elif sim_type == 'geek':
+    data = geek_simulations(parameters,phi=phi,seed=seed)
+else:
+    raise ValueError('"{}" is not a valid input argument'.format(sim_type))
 
 
-plt.plot(ode_data[:,0], ode_data[:,1] ,'--', color='grey' ,)
-plt.plot(ode_data[:, 0], ode_data[:, 3],'--' ,color='black',)
+filename = '{}/{}_{}_{}_{}.csv'.format(output,param_type,sim_type,phi,seed)
+print("Write output file {}".format(filename))
 
-plt.show()
+data.to_csv(filename)
 
 
 
-"""
-====================================================================================================================
-"""
-
-
-"""
-Dilute reaction limited 
-"""
-
-ode_data = ecell4_ode_simulation(parameters_reaction_lim,phi=0.0,seed=1)
-
-results = []
-for i in range(N_sim):
-    results.append(ecell4_brd_simulation(parameters_reaction_lim, phi=0.0, seed=i) )
-
-
-for data in results:
-    plt.plot(data[:,0], data[:,1] , color='grey' , alpha=0.2)
-    plt.plot(data[:, 0], data[:, 3], color='black', alpha=0.2)
-
-
-plt.plot(ode_data[:,0], ode_data[:,1] ,'--', color='grey' ,)
-plt.plot(ode_data[:, 0], ode_data[:, 3],'--' ,color='black',)
-
-plt.show()
 
 
 
-"""
-Crowded diffusion limited phi 30 % 
-"""
-
-ode_data = ecell4_ode_simulation(parameters_reaction_lim,phi=0.3,seed=1)
-
-results = []
-for i in range(N_sim):
-    results.append(ecell4_brd_simulation(parameters_reaction_lim, phi=0.3, seed=i) )
-
-
-for data in results:
-    plt.plot(data[:,0], data[:,1] , color='grey' , alpha=0.2)
-    plt.plot(data[:, 0], data[:, 3], color='black', alpha=0.2)
-
-
-plt.plot(ode_data[:,0], ode_data[:,1] ,'--', color='grey' ,)
-plt.plot(ode_data[:, 0], ode_data[:, 3],'--' ,color='black',)
-
-plt.show()
-
-
-
-"""
-Crowded diffusion limited phi 50 % 
-"""
-
-ode_data = ecell4_ode_simulation(parameters_diff_lim,phi=0.3,seed=1)
-
-results = []
-for i in range(N_sim):
-    results.append(ecell4_brd_simulation(parameters_diff_lim, phi=0.3, seed=i) )
-
-
-for data in results:
-    plt.plot(data[:,0], data[:,1] , color='grey' , alpha=0.2)
-    plt.plot(data[:, 0], data[:, 3], color='black', alpha=0.2)
-
-
-plt.plot(ode_data[:,0], ode_data[:,1] ,'--', color='grey' ,)
-plt.plot(ode_data[:, 0], ode_data[:, 3],'--' ,color='black',)
-
-plt.show()
