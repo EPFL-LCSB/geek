@@ -81,29 +81,29 @@ def geek_regression(df,
     if this_result.pvalues['const'] < confidence_level:
         data = {'rate_constant': rate_constant,
                 'beta': this_result.params['const'],
-                'lb_beta': this_result.conf_int(0.05)[0]['const'],
-                'ub_beta': this_result.conf_int(0.05)[1]['const'],
-                'p_beta': this_result.pvalues['const'],
+                'beta_lb': this_result.conf_int(0.05)[0]['const'],
+                'beta_ub': this_result.conf_int(0.05)[1]['const'],
+                'beta_p': this_result.pvalues['const'],
                 }
     else:
         data = {'rate_constant': rate_constant,
                 'beta': .0,
-                'lb_beta': .0,
-                'ub_beta': .0,
-                'p_beta': this_result.pvalues['const'],
+                'beta_lb': .0,
+                'beta_ub': .0,
+                'beta_p': this_result.pvalues['const'],
                 }
 
     for this_conc in concentrations:
         if this_result.pvalues[this_conc] < confidence_level:
-            data['alpha_{}_{}'.format(this_conc,rate_constant)] = this_result.params[this_conc]
-            data['lb_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.conf_int(0.05)[0][this_conc]
-            data['ub_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.conf_int(0.05)[1][this_conc]
-            data['p_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.pvalues[this_conc]
+            data['alpha_{}'.format(this_conc,)] = this_result.params[this_conc]
+            data['alpha_{}_lb'.format(this_conc,)] = this_result.conf_int(0.05)[0][this_conc]
+            data['alpha_{}_ub'.format(this_conc,)] = this_result.conf_int(0.05)[1][this_conc]
+            data['alpha_{}_p'.format(this_conc,)] = this_result.pvalues[this_conc]
         else:
-            data['alpha_{}_{}'.format(this_conc,rate_constant)] = .0
-            data['lb_alpha_{}_{}'.format(this_conc, rate_constant)] = .0
-            data['ub_alpha_{}_{}'.format(this_conc, rate_constant)] = .0
-            data['p_alpha_{}_{}'.format(this_conc, rate_constant)] = this_result.pvalues[this_conc]
+            data['alpha_{}'.format(this_conc,)] = .0
+            data['alpha_{}_lb'.format(this_conc,)] = .0
+            data['alpha_{}_ub'.format(this_conc,)] = .0
+            data['alpha_{}_p'.format(this_conc,)] = this_result.pvalues[this_conc]
 
     return data
 

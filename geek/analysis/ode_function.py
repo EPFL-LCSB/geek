@@ -26,6 +26,7 @@ limitations under the License.
 """
 
 from sympy.utilities.autowrap import ufuncify
+import numpy as np
 
 
 class OdeFun:
@@ -38,13 +39,13 @@ class OdeFun:
                                 indexed by variable symbols {v1: p1*var1*var2, var2: ...}
         """
 
-        self.variables = vairables
+        self.variables = variables
         self.parameters = parameters
 
-        self.input = vairables + parameters
+        self.input = variables + parameters
         self.expressions = [expression_dict[v] for v in variables]
 
-        self.function = ufuncify(self.input, expressions)
+        self.function = ufuncify(self.input, self.expressions)
 
     def __call__(self, t, x, parameter_dict):
         """
@@ -59,7 +60,7 @@ class OdeFun:
         x_list = list(x)
         input = x_list + parameters_values
 
-        dxdt = np.array(self.function(input))
+        dxdt = np.array(self.function(*input))
         return dxdt
 
 
