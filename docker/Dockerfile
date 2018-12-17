@@ -53,7 +53,7 @@ COPY install_openbread.sh .
 RUN /bin/bash ./install_openbread.sh
 
 # Make the workspace folder that will link the sources
-RUN mkdir /pymes
+RUN mkdir /geek
 
 COPY .bashrc $HOME
 RUN chown "$USER" "$HOME/.bashrc"
