@@ -71,11 +71,11 @@ cwd = os.getcwd()
 
 input_file = cwd+"/validation_reactionlim_cluster.py"
 folder = cwd+"/input_case_study_equilibrium_"+timestamp+"/"
-log_folder = args[1]+"/out_"+timestamp
+log_folder = args[1]+"/out_reaction_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
 
-output = args[1]+"/run_"+timestamp
+output = args[1]+"/run_reaction_"+timestamp
 os.mkdir(output)
 
 job_id = "$SLURM_JOB_ID"
