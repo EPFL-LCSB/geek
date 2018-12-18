@@ -29,7 +29,9 @@ limitations under the License.
 import numpy as np
 import random
 
-from pandas import DataFrame
+from pandas import DataFrame, read_csv
+from geek.analysis import geek_regression
+
 
 AVOGADRO_NUMBER = 6e23
 
@@ -126,9 +128,129 @@ def rad2diff(radius):
 Simulation functions
 """
 
-def geek_simulations(parameters,phi= 0.0):
-    pass
+def geek_simulations(parameters,sim_type,phi= 0.0,seed=1):
+    if sim_type == 'diff':
+        df = read_csv('../data/validation_diffusion_lim.csv')
+    elif sim_type == 'react':
+        df = read_csv('../data/validation_reaction_lim.csv')
+    else:
+        raise ValueError('{} is not a valid input'.format(sim_type))
+    # Reference concentrations
+    reference_concentrations = [50e-6,]*3
+    concentrations = ['A_concentration',
+                      'B_concentration',
+                      'C_concentration',]
 
+
+    this_df = df[(df['volume_fraction'] == phi)]
+
+    # Extract the GEEK parameters from Linear regression
+    k1_fwd_params = geek_regression(this_df,
+                                      concentrations,
+                                      reference_concentrations,
+                                      'k1_fwd_relative',
+                                      verbose=True)
+
+    k1_bwd_params = geek_regression(this_df,
+                                      concentrations,
+                                      reference_concentrations,
+                                      'k1_bwd_relative',
+                                      verbose=True)
+
+    random.seed(seed)
+    #Map to parameter dict
+    param_dict = {
+        'k_1f0': parameters['k_fwd'],
+        'k_1b0': parameters['k_fwd']*parameters['K_eq'],
+        'beta_1f': k1_fwd_params['beta_lb'] + (k1_fwd_params['beta_ub'] - k1_fwd_params['beta_lb']) * random.random(),
+        'alpha_A_1f': k1_fwd_params['alpha_A_concentration_lb'] + (
+                k1_fwd_params['alpha_A_concentration_ub'] - k1_fwd_params[
+                'alpha_A_concentration_lb']) * random.random(),
+        'alpha_B_1f': k1_fwd_params['alpha_B_concentration_lb'] + (
+                k1_fwd_params['alpha_B_concentration_ub'] - k1_fwd_params[
+            'alpha_B_concentration_lb']) * random.random(),
+        'alpha_C_1f': k1_fwd_params['alpha_C_concentration_lb'] + (
+                k1_fwd_params['alpha_C_concentration_ub'] - k1_fwd_params[
+            'alpha_C_concentration_lb']) * random.random(),
+        'beta_1b': k1_bwd_params['beta_lb'] + (k1_bwd_params['beta_ub'] - k1_bwd_params['beta_lb']) * random.random(),
+        'alpha_A_1b': k1_bwd_params['alpha_A_concentration_lb'] + (
+                k1_bwd_params['alpha_A_concentration_ub'] - k1_bwd_params[
+            'alpha_A_concentration_lb']) * random.random(),
+        'alpha_B_1b': k1_bwd_params['alpha_B_concentration_lb'] + (
+                k1_bwd_params['alpha_B_concentration_ub'] - k1_bwd_params[
+            'alpha_B_concentration_lb']) * random.random(),
+        'alpha_C_1b': k1_bwd_params['alpha_C_concentration_lb'] + (
+                k1_bwd_params['alpha_C_concentration_ub'] - k1_bwd_params[
+            'alpha_C_concentration_lb']) * random.random(),
+        'A0': reference_concentrations[0],
+        'B0': reference_concentrations[1],
+        'C0': reference_concentrations[2],
+    }
+
+    """
+    Declare ODE-Problem
+    """
+    from sympy import symbols
+    from sympy import exp as sym_exp
+
+    # Variables
+    A, B, C = symbols(['A', 'B', 'C'])
+    variables = [A, B, C,]
+    # Parameters
+    k_1f0, k_1b0, = symbols(['k_1f0', 'k_1b0',] )
+    # Define symbols for the GEEK parameters
+    beta_1f, beta_1b,  = symbols(['beta_1f', 'beta_1b',] )
+    alpha_A_1f, alpha_A_1b, = symbols(['alpha_A_1f', 'alpha_A_1b',])
+    alpha_B_1f, alpha_B_1b, = symbols(['alpha_B_1f', 'alpha_B_1b',])
+    alpha_C_1f, alpha_C_1b, = symbols(['alpha_C_1f', 'alpha_C_1b',])
+    A0,B0,C0 = symbols(['A0', 'B0', 'C0'])
+
+    ode_params = [k_1f0, k_1b0,
+                  beta_1f, beta_1b ,
+                  alpha_A_1b, alpha_A_1f ,
+                  alpha_B_1b, alpha_B_1f,
+                  alpha_C_1f, alpha_C_1b,
+                  A0, B0, C0]
+    # Reactions
+
+    geek_reactions = {
+        'r_1f': k_1f0 * A * B * sym_exp(beta_1f) * (A / A0) ** alpha_A_1f * (B / B0) ** alpha_B_1f * (
+                    C / C0) ** alpha_C_1f,
+        'r_1b': k_1b0 * C * sym_exp(beta_1b) * (A / A0) ** alpha_A_1b * (B / B0) ** alpha_B_1b * (
+                    C / C0) ** alpha_C_1b
+    }
+
+    #Expressions
+
+    expressions = {
+        A: geek_reactions['r_1b'] - geek_reactions['r_1f'],
+        B: geek_reactions['r_1b'] - geek_reactions['r_1f'],
+        C: geek_reactions['r_1f'] - geek_reactions['r_1b'],
+    }
+
+    from geek.analysis.ode_function import OdeFun
+    fun = OdeFun(variables,ode_params,expressions)
+
+    from scipy.integrate import ode
+    r = ode(fun).set_integrator('vode', method='bdf')
+
+    eps = 1e-3
+    y0 = [parameters['A_0'] * (1. - eps),
+          parameters['B_0'] * (1. - eps),
+          parameters['A_0'] * eps]
+    t0 = 0.0
+
+    r.set_initial_value(y0, t0).set_f_params(param_dict)
+    data = []
+
+    scale = parameters['volume']*AVOGADRO_NUMBER
+    while r.successful() and r.t < parameters['t_max']:
+        data.append( np.append(r.t + parameters['t_max']/1000.0,
+                     r.integrate(r.t + parameters['t_max']/1000.0) * scale))
+    data = np.array(data)
+
+    df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
+    return df
 
 def openbread_simulation(parameters, phi= 0.0, seed=1):
 
@@ -365,7 +487,6 @@ def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
 
     m.add_reaction_rule(create_unbinding_reaction_rule(C, A, B, parameters['k_fwd']*parameters['K_eq']))
 
-
     a = (parameters['volume'] / 1000) ** (1 / 3) * s  # in m
     w = ODEWorld(Real3(a, a, a))
     w.bind_to(m)
@@ -375,11 +496,9 @@ def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
     N_B = parameters['B_0']*parameters['volume']*AVOGADRO_NUMBER
     N_C = parameters['C_0']*parameters['volume']*AVOGADRO_NUMBER
 
-
     w.add_molecules(A, N_A)
     w.add_molecules(B, N_B)
     w.add_molecules(C, N_C)
-
 
     obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
     sim = ODESimulator(w)
@@ -423,7 +542,7 @@ elif sim_type == 'gfrd':
 elif sim_type == 'openbread':
     data = openbread_simulation(parameters,phi=phi,seed=seed)
 elif sim_type == 'geek':
-    data = geek_simulations(parameters,phi=phi,seed=seed)
+    data = geek_simulations(parameters,param_type,phi=phi,seed=seed)
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))
 
