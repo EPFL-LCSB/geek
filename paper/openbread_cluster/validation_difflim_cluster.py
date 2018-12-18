@@ -4,6 +4,7 @@
 General single enzyme model to run at the cluster
 
 """
+
 import sys
 
 args = sys.argv
@@ -25,7 +26,7 @@ job_id = int(args[10])
 OPENBREAD model to extract the GEEK parameters ready for use on the cluster
 """
 
-
+import time as pytime
 from openbread.core import *
 
 
@@ -53,6 +54,7 @@ k1f = 5e9         # 1/Ms
 k1b = 5e9*50e-6   # 1/s
 
 
+
 # Setup particle simulation environemnt
 volume = 10e-18 # (0.1 mum)^3 in L
 
@@ -62,7 +64,7 @@ medium = ParticleModel.Medium( viscosity=0.7e-3, # Pa s
 crowding = ParticleModel.Crowding( volume_fraction = volume_fraction,
                                    mu = np.log(mu_mass),
                                    sigma = sigma_mass,
-                                   max_size = 10e-3)
+                                   max_size = 3e-3)
 
 particle_model = ParticleModel(medium,
                                crowding,
@@ -77,9 +79,10 @@ particle_model.initial_conditions['A'] = A_concentration
 particle_model.initial_conditions['B'] = B_concentration
 particle_model.initial_conditions['C'] = C_concentration
 
+start_time = pytime.clock()
 
 result = particle_model.simulate(   dt=0.25e-9,
-                                    max_time=1e-6,
+                                    max_time=2e-6,
                                     log_step=10,
                                     n_sample=100,
                                     random_seed=realization,
@@ -87,7 +90,7 @@ result = particle_model.simulate(   dt=0.25e-9,
                                     is_constant_state=True,
                                     t_equlibriate=0.0)
 
-#print("--- %s seconds ---" % (time.time() - start_time))
+print("--- %s seconds ---" % (pytime.clock() - start_time))
 # Wirte the result in to a data frame and to csv
 
 from pandas import DataFrame
