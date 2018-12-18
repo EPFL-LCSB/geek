@@ -54,11 +54,11 @@ EC_pgm = Species(  name = 'EC_pgm',
 
 species = [g3p, g2p, pgm, EC_pgm]
 
-# Define microscopic reaction rate constants:
-k1f = 1e5       # 1/Ms
-k1b = 20.0      # 1/s
-k2f = 10.0      # 1/s
-k2b = 1e5       # 1/Ms
+# Define elementary reaction rate constants:
+k1f = 1.52e5       # 1/Ms
+k1b = 10.0      # 1/s
+k2f = 22.0      # 1/s
+k2b = 3.29e5       # 1/Ms
 
 
 # Setup particle simulation environemnt

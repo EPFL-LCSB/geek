@@ -45,7 +45,9 @@ class OdeFun:
         self.input = variables + parameters
         self.expressions = [expression_dict[v] for v in variables]
 
-        self.function = ufuncify(self.input, self.expressions)
+        self.function = []
+        for e in self.expressions:
+            self.function.append(ufuncify(self.input, e, backend='Cython'))
 
     def __call__(self, t, x, parameter_dict):
         """
@@ -60,7 +62,7 @@ class OdeFun:
         x_list = list(x)
         input = x_list + parameters_values
 
-        dxdt = np.array(self.function(*input))
+        dxdt = np.array([f(*[np.array([i], dtype=np.float) for i in input])[0] for f in self.function]).T
         return dxdt
 
 
