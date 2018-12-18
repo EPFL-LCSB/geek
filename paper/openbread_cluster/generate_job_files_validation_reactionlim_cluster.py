@@ -30,7 +30,7 @@ def radius_distribution(radius,mu,sigma):
 
 
 def cpu_time_from_particles(n):
-   cpu_time = 1000.0 + 5*3600/50000*n
+   cpu_time = (1000.0 + 5*3600/50000*n)*2
    return cpu_time
 
 
@@ -42,7 +42,7 @@ volume = 10e-18 # (0.1 mum)^3 in L
 """Parameter to be varied """
 mu_sigma = [(21.1, 0),]
 realizations = 10
-volume_fractions = [0.0,0.1,0.2,0.3,0.4,0.5]
+volume_fractions = [0.0,0.1,0.3,]
 
 
 # saturations =  np.arange(0.1,1.0,0.1)
@@ -70,7 +70,7 @@ timestamp = time.ctime().replace(" ", "_").replace(":","_")
 cwd = os.getcwd()
 
 input_file = cwd+"/validation_reactionlim_cluster.py"
-folder = cwd+"/input_case_study_equilibrium_"+timestamp+"/"
+folder = cwd+"/input_case_study_reactionlim_"+timestamp+"/"
 log_folder = args[1]+"/out_reaction_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
