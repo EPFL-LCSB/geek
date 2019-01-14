@@ -1,0 +1,9 @@
+FROM danielweilandt/geek_docker:latest
+ENTRYPOINT []
+USER root
+RUN mkdir /geek
+COPY . /geek
+USER user
+RUN pip install --user pytest-cov
+RUN pip install --user /geek
+CMD /bin/bash

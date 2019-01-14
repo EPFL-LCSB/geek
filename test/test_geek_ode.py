@@ -24,16 +24,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 """
+
 from pandas import read_csv, DataFrame
 import random
 import numpy as np
 from geek.analysis import geek_regression
 
-
-"""
-Define the GEEK Michaelis-Menten ODE-System
-
-"""
 
 seed = 1
 
@@ -41,9 +37,6 @@ df = read_csv('../data/result_full_factorial_pgm.csv')
 
 # Reference concentrations
 pgm = 64e-6
-
-total_enzyme = pgm
-
 g3p = 49e-6
 g2p = g3p
 
@@ -165,16 +158,12 @@ param_dict = {
     'E0': reference_concentrations[1],
     'P0': reference_concentrations[2],
     'S0': reference_concentrations[2],
-    'E_tot':total_enzyme,
 }
 
 """
 Declare ODE-Problem
 """
-from sympy import symbols,Symbol, nsolve
-from sympy import N as numerical
-from sympy import re as real
-from sympy import im as imag
+from sympy import symbols
 from sympy import exp as sym_exp
 
 # Variables
@@ -217,40 +206,28 @@ expressions = {
     P: geek_reactions['r_2f'] - geek_reactions['r_2b'],
 }
 
+from geek.analysis.ode_function import OdeFun
+fun = OdeFun(variables,ode_params,expressions)
 
-E_tot = symbols('E_tot')
+from scipy.integrate import ode
+r = ode(fun).set_integrator('vode', method='bdf')
 
-# QSSA Expression:
-ES_qss = expressions[ES].subs(E,E_tot-ES)
+eps = 1e-3
+y0 = [pgm * eps,
+      pgm * (1. - eps),
+      g3p * eps,
+      g3p * (1. - eps),
+      ]
 
-# Substitute values
-ES_qss.subs({ Symbol(key):val for key,val in param_dict.items()})
+t0 = 0.0
 
-p = np.arange(1e-3,10,0.1)*g3p
-s = np.arange(1e-3,10,0.1)*g2p
+r.set_initial_value(y0, t0).set_f_params(param_dict)
+data = []
 
-data=np.array([[0., 0., 0.],])
+t_max = 10.0
+while r.successful() and r.t < t_max:
+    data.append( np.append(r.t + t_max/1000.0,
+                 r.integrate(r.t + t_max/1000.0 )) )
+data = np.array(data)
 
-for the_p in p:
-    for the_s in s:
-        ES_qss_temp = ES_qss.subs({Symbol(key): val for key, val in param_dict.items()})
-        ES_qss_temp = ES_qss_temp.subs({S:the_s, P:the_p})
-        ES_qss_val = nsolve(ES_qss_temp, ES, reference_concentrations[0])
-        if imag(ES_qss_val) < 1e-9:
-            ES_qss_val = real(ES_qss_val)
-            E_qss_val = param_dict['E_tot'] - ES_qss_val
-        else:
-            raise ValueError('Invalid output!')
-
-
-        v_net = geek_reactions['r_2f'] - geek_reactions['r_2b']
-
-        this_params = {'ES':ES_qss_val,'E':E_qss_val,'S':the_s, 'P':the_p }
-        this_params.update(param_dict)
-
-        tamp = v_net.subs({Symbol(key): val for key, val in this_params.items()})
-        v_net_val = numerical(tamp)
-
-        data =  np.append(data,np.array([[the_s,the_p,v_net_val]]),axis=0 )
-
-df = DataFrame(data=data, columns=['S', 'P', 'v_net'])
+df = DataFrame(data=data, columns = ['time', 'ES', 'E', 'P', 'S'])

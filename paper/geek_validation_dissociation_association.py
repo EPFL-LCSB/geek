@@ -25,7 +25,7 @@ limitations under the License.
 
 """
 
-
+import time as tim
 import numpy as np
 import random
 
@@ -334,9 +334,9 @@ def ecell4_gfrd_simulation(parameters,phi= 0.0, seed=1):
     rng.seed(seed)
     
     #Rescale to 10 mum
-    s = 1e0
-    s2 = 1e0
-    s3 = 1e0
+    s = 1e6
+    s2 = 1e12
+    s3 = 1e18
 
     A = Species('A', parameters['r_A']*s, parameters['D_A']*s2)
     B = Species('B', parameters['r_B']*s, parameters['D_B']*s2)
@@ -382,25 +382,27 @@ def ecell4_gfrd_simulation(parameters,phi= 0.0, seed=1):
 
     sim.initialize()  
     
-#    data = np.array([0., N_A, N_B, N_C])
+    data = np.array([0., N_A, N_B, N_C])
 
+    start_time = tim.time()
     t_log = 0.0
     dt_log = parameters['t_max']/1000.
     t_log = dt_log
-#    while sim.t() < parameters['t_max']:
-       #print(sim.t(), sim.next_time(), sim.dt(), w.num_molecules(A))
-#       if sim.t() > t_log:
-#          t_log += dt_log
-#          data = np.append(data, [sim.t(),
-#                                  w.num_molecules(A),
-#                                  w.num_molecules(B),
-#                                  w.num_molecules(C), ] )
-#          print(sim.t(), sim.next_time(), sim.dt(), w.num_molecules(A))
-          
-#       sim.step() 
+    while sim.t() < parameters['t_max']:
+          #print(sim.t(), sim.next_time(), sim.dt(), w.num_molecules(A))
+          if sim.t() > t_log:
+             t_log += dt_log
+             data = np.append(data, [sim.t(),
+                                     w.num_molecules(A),
+                                     w.num_molecules(B),
+                                     w.num_molecules(C), ] )
+             print(sim.t(), sim.next_time(), sim.dt(), w.num_molecules(A), tim.time() - start_time )
+             start_time = tim.time()
+
+          sim.step()
 
 
-    sim.run(parameters['t_max'], obs)
+    #sim.run(parameters['t_max'], obs)
 
     data = np.array(obs.data())
     # Write in a data frameprint
@@ -479,7 +481,6 @@ def ecell4_brd_simulation(parameters,phi=0.0,seed=1):
 
     return df
 
-
 def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
     from ecell4 import Species, NetworkModel, \
         create_binding_reaction_rule, create_unbinding_reaction_rule,\
@@ -537,7 +538,283 @@ def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
 
     return df
 
+def crowder_free_simulation(parameters, phi=0.0, seed=1):
 
+
+    import numpy.random as rnd
+    from math import sqrt,exp,log
+    random.seed(seed)
+    np.random.seed(seed)
+
+    #Rescale to mum
+    s = 1e6
+    s2 = 1e12
+    s3 = 1e18
+
+    #Number of crowders
+    R_C = mass2rad(parameters['mu_mass'])*s
+    volume_crw = 4.0 / 3.0 * np.pi * R_C ** 3
+    N_crw = round(parameters['volume']/1000*s3*phi/volume_crw)
+
+    # Rescaled volume L > mum*3
+    V = parameters['volume']/1000*s3
+    # Box  length
+    L = (parameters['volume'] / 1000) ** (1 / 3) * s
+
+    #
+    gamma = 4.0*np.pi*(parameters['r_A']+parameters['r_B'])*(parameters['D_A']+parameters['D_B'])*s3
+    rescaled_keff = parameters['k_fwd']/AVOGADRO_NUMBER/1000*s3
+    effective_k_binding = gamma*rescaled_keff/(gamma-rescaled_keff)
+
+    effective_k_unbinding = parameters['k_fwd']*parameters['K_eq']
+
+    class particle:
+        def __init__(self,x,S,D,R):
+            self.position = x
+            self.position0 = x
+            self.species = S
+            self.diffusion = D
+            self.radius = R
+
+    particles = {}
+
+    # Check collision
+    def check_collision(particles ,position, radius):
+        for i,p in particles.items():
+            rij = particles[i].position - position
+            # Periodic boundaries:
+            for k, xij in enumerate(rij):
+                if xij > L / 2:
+                    rij[k] = xij - L
+                if xij < -L / 2:
+                    rij[k] = xij + L
+
+            dist = np.sqrt(np.sum((rij)**2, axis=0))
+            min_dist = particles[i].radius - radius
+
+            if dist < min_dist:
+                return True # collision
+
+        return False # free
+
+
+
+
+    # Add the species in the concentrations
+    N_A = parameters['A_0']*parameters['volume']*AVOGADRO_NUMBER
+    N_B = parameters['B_0']*parameters['volume']*AVOGADRO_NUMBER
+    N_C = parameters['C_0']*parameters['volume']*AVOGADRO_NUMBER
+
+    # Add particles
+    N = 0
+    position = rnd.uniform(0, L, 3)
+    particles[0] = particle(position,
+                            'A',
+                            parameters['D_A'] * s2,
+                            parameters['r_A'] * s)
+
+    while N < N_A:
+        position = rnd.uniform(0,L,3)
+        if not check_collision(particles,position,parameters['r_A']*s):
+            particles[max(particles.keys()) + 1] = particle(position,
+                                                            'A',
+                                                             parameters['D_A']*s2,
+                                                             parameters['r_A']*s)
+            N+=1
+
+    N = 0
+    while N < N_B:
+        position = rnd.uniform(0,L,3)
+        if not check_collision(particles,position,parameters['r_B']*s):
+            particles[max(particles.keys()) + 1] = particle(position,
+                                                            'B',
+                                                             parameters['D_B']*s2,
+                                                             parameters['r_B']*s)
+            N+=1
+
+    N = 0
+    while N < N_A:
+        position = rnd.uniform(0,L,3)
+        if not check_collision(particles,position,parameters['r_C']*s):
+            particles[max(particles.keys()) + 1] = particle(position,
+                                                            'C',
+                                                             parameters['D_C']*s2,
+                                                             parameters['r_C']*s)
+            N+=1
+
+
+
+    # Recalcualtions
+    A = N_crw*R_C/V
+    B = 4*np.pi*N_crw*R_C**2/V
+    C = N_crw*R_C**2/V
+
+
+    def log_p(r):
+        return log(1-phi)\
+             -B*r/(1-phi)\
+              -np.pi*4*A*r**2/(1-phi)\
+              -B**2*r**2/(2*(1-phi)**2)\
+              -4*np.pi/3*( N_crw/(V*(1-phi)) + B**2*C/(3*(1-phi)**3) + A*B/(1-phi)**2 ) * r**3
+
+    #P(legal for C)
+    p_C = exp(log_p( parameters['r_C']*s))
+
+    # P(legal for B)
+    p_A = exp(log_p(parameters['r_A'] * s))
+    # P(legal for A)
+    p_B = exp(log_p(parameters['r_B'] * s))
+
+    def sample_spherical(npoints, ndim=3):
+        vec = np.random.randn(ndim, npoints)
+        vec /= np.linalg.norm(vec, axis=0)
+        return vec
+
+
+    dt_log = parameters['t_max']/1000.0
+    t_log =dt_log
+
+    class Result:
+        def __init__(self,t,A,B,C):
+            self.time = [t,]
+            self.species = {
+                'A':[A,],
+                'B':[B,],
+                'C':[C,],
+            }
+
+    result = Result(0,N_A,N_B,N_C)
+
+    # Simulation Algorithm
+
+    print("Simulation set up")
+    t = 0
+    while t < parameters['t_max']:
+        N = len(particles)
+
+        i, p = random.choice(list(particles.items()))
+
+        #Propagate particles
+        dx = rnd.normal(0,sqrt(2*particles[i].diffusion*parameters['dt']) )
+        particles[i].position += dx
+        dx_dist = np.sqrt(np.sum((dx)**2, axis=0))
+
+        if rnd.random() < np.pi*N_crw*(R_C+particles[i].radius)*dx_dist/V:
+            particles[i].position = particles[i].position0
+        #Check for an overlap
+        for j in particles:
+            if j == i: continue
+
+            try:
+                rij = particles[i].position - particles[j].position
+
+                # Periodic boundaries:
+                for k,xij in enumerate(rij):
+                    if xij > L/2:
+                        rij[k] = xij - L
+                    if xij < -L/2:
+                        rij[k] = xij + L
+
+                dist = np.sqrt(np.sum((rij)**2, axis=0))
+                min_dist = particles[i].radius - particles[j].radius
+                if dist < min_dist:
+                    if (particles[i].species == 'A' and  particles[j].species == 'B' ) or \
+                       (particles[i].species == 'B' and particles[j].species == 'A') :
+
+                        #Reaction monte carlo for product C
+                        if rnd.random() < effective_k_binding*parameters['dt']:
+                            # P(legal of C)
+                            p = p_C
+
+                            if np.random() < 1-p:
+                                # Put back
+                                particles[i].position = particles[i].position0
+                            else:
+                                # Check for intersection
+                                if not check_collision(particles,position1,parameters['r_C']*s):
+                                    #Reaction takes plase
+                                    position = (particles[i].position + particles[j].position)/2.0
+                                    del particles[i]
+                                    del particles[j]
+                                    particles[max(particles.keys())+1] = particle(position,
+                                                                                  'C',
+                                                                                  parameters['D_C']*s2,
+                                                                                  parameters['r_C']*s)
+                                else:
+                                    # Put back
+                                    particles[i].position = particles[i].position0
+
+                        else:
+                            # Put back
+                            particles[i].position = particles[i].position0
+                    else:
+                        #Put back
+                        particles[i].position = particles[i].position0
+
+            except KeyError:
+                continue
+
+        for i in particles.keys():
+            #First order reaction
+            if particles[i].species == 'C':
+                if rnd.random() < effective_k_unbinding*parameters['dt']/N:
+                    p = p_A * p_B
+
+                    if rnd.random() < 1 - p:
+                        # Reject the reactions
+                        pass
+                    else:
+
+                        dist = (parameters['r_A']+parameters['r_B'])*s
+                        position1 = particles[i].position + sample_spherical(1)*dist/2
+                        position2 = particles[i].position - sample_spherical(1) * dist / 2
+                        # Check intersection
+                        if not check_collision(particles,position1,parameters['r_A']*s) and \
+                           not check_collision(particles,position2,parameters['r_B']*s):
+
+                            # Periodic boundaries:
+                            for k, xij in enumerate(position1):
+                                if xij > L / 2:
+                                    position1[k] = xij - L
+                                if xij < -L / 2:
+                                    position1[k] = xij + L
+
+                            # Periodic boundaries:
+                            for k, xij in enumerate(position2):
+                                if xij > L / 2:
+                                    position2[k] = xij - L
+                                if xij < -L / 2:
+                                    position2[k] = xij + L
+
+
+                            # Place particles
+                            del particles[i]
+                            particles[max(particles.keys()) + 1] = particle(position1,
+                                                                            'A',
+                                                                            parameters['D_A'] * s2,
+                                                                            parameters['r_A'] * s)
+                            particles[max(particles.keys()) + 1] = particle(position2,
+                                                                            'B',
+                                                                            parameters['D_B'] * s2,
+                                                                            parameters['r_B'] * s)
+
+        t += parameters['dt']/N
+        print('{}'.format(t))
+
+        if t_log < t:
+            result.time.append(t)
+            result.species['A'].append(sum([1 for p in particles.values() if p.species == 'A' ]))
+            result.species['B'].append(sum([1 for p in particles.values() if p.species == 'B' ]))
+            result.species['C'].append(sum([1 for p in particles.values() if p.species == 'C' ]))
+            t_log += dt_log
+
+            print('Log time')
+
+    # Write in a data frame
+    data = np.array([result.time, result.species['A'], result.species['B'], result.species['C'] ])
+    df = DataFrame(data=data.T, columns = ['time', 'A', 'B', 'C'])
+
+    return df
 
 """
 Run A simulation
@@ -570,6 +847,8 @@ elif sim_type == 'openbread':
     data = openbread_simulation(parameters,phi=phi,seed=seed)
 elif sim_type == 'geek':
     data = geek_simulations(parameters,param_type,phi=phi,seed=seed)
+elif sim_type == 'crwd_free':
+    data = crowder_free_simulation(parameters, phi=phi, seed=seed)
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))
 

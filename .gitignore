@@ -3,6 +3,11 @@
 cobra_docker/work/.idea/*
 *.html
 
+# Figures
+*.pdf
+*.png
+*.tiff
+
 ###########################################
 ###	Standard Python	.gitignore	###
 ###########################################
