@@ -69,7 +69,7 @@ parameters_diff_lim = {
     'B_0': 50e-6,       # M
     'C_0': 0,           # M
     'volume': 10e-18,   # L
-    't_max': 1e-4,      # s
+    't_max': 1e-5,      # s
     'dt': 0.5e-9,       # s
     'mu_mass': 21.1     # s
 }
@@ -306,7 +306,7 @@ def openbread_simulation(parameters, phi= 0.0, seed=1):
 
     result = particle_model.simulate(dt=parameters['dt'],
                                      max_time=parameters['t_max'],
-                                     log_step=10,
+                                     log_step=1,
                                      n_sample=0,
                                      random_seed=seed,
                                      is_hardsphere=True,
@@ -555,13 +555,17 @@ Run A simulation
 """
 import sys
 
+
 #if __name__ is "__main__":
 
-param_type = sys.argv[1]
-sim_type   = sys.argv[2]
-phi        = float(sys.argv[3])
-seed       = int(sys.argv[4])
-output     = sys.argv[5]
+param_type     = sys.argv[1]
+sim_type       = sys.argv[2]
+phi            = float(sys.argv[3])
+seed           = int(sys.argv[4])
+time_scaling   = float(sys.argv[5])
+conc_scaling   = float(sys.argv[6])
+dt_scaling   = float(sys.argv[7])
+output     = sys.argv[8]
 
 
 if param_type == 'diff':
@@ -570,6 +574,11 @@ elif param_type == 'react':
     parameters = parameters_reaction_lim
 else:
     raise ValueError('"{}" is not a valid input argument'.format(param_type))
+
+parameters['t_max'] = parameters['t_max']*time_scaling
+parameters['A_0'] = parameters['A_0']*conc_scaling
+parameters['B_0'] = parameters['B_0']*conc_scaling
+parameters['dt'] = parameters['dt']*dt_scaling
 
 if sim_type == 'ode':
     data = ecell4_ode_simulation(parameters,phi=phi,seed=seed)
@@ -581,16 +590,17 @@ elif sim_type == 'openbread':
     data = openbread_simulation(parameters,phi=phi,seed=seed)
 elif sim_type == 'geek':
     data = geek_simulations(parameters,param_type,phi=phi,seed=seed)
-elif sim_type == 'crwd_free':
+elif sim_type == 'crwdfree':
     data = crowder_free_simulation(parameters, phi=phi, seed=seed)
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))
 
 
-filename = '{}/{}_{}_{}_{}.csv'.format(output,param_type,sim_type,phi,seed)
+filename = '{}/{}_{}_{}_{}_{}_{}_{}.csv'.format(output,param_type,sim_type,phi,seed,time_scaling,conc_scaling,dt_scaling)
 print("Write output file {}".format(filename))
 
 data.to_csv(filename)
+
 
 
 
