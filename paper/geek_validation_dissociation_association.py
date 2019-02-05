@@ -581,7 +581,7 @@ elif sim_type == 'openbread':
     data = openbread_simulation(parameters,phi=phi,seed=seed)
 elif sim_type == 'geek':
     data = geek_simulations(parameters,param_type,phi=phi,seed=seed)
-elif sim_type == 'crwd_free':
+elif sim_type == 'crwdfree':
     data = crowder_free_simulation(parameters, phi=phi, seed=seed)
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))
