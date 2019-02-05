@@ -51,7 +51,7 @@ g2p = g3p
 k1f = 1.52e5       # 1/Ms
 k1b = 10.0      # 1/s
 k2f = 22.0      # 1/s
-k2b = 3.29e5       # 1/Ms
+k2b = 3.29e5     # 1/Ms
 
 
 
@@ -63,6 +63,7 @@ concentrations = ['enzyme_complex_concentration',
 
 
 # Filter the data frame for specific condition
+
 this_volume_fraction = 0.1
 this_mu              = 31.9
 this_sigma           = 0.825
@@ -251,6 +252,7 @@ for the_p in p:
         tamp = v_net.subs({Symbol(key): val for key, val in this_params.items()})
         v_net_val = numerical(tamp)
 
-        data =  np.append(data,np.array([[the_s,the_p,v_net_val]]),axis=0 )
+        data = np.append(data,np.array([[the_s,the_p,v_net_val]]), axis=0)
 
 df = DataFrame(data=data, columns=['S', 'P', 'v_net'])
+

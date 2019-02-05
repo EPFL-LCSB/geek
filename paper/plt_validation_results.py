@@ -75,7 +75,85 @@ Validation openbread dilute
 
 f = plt.figure()
 phi = 0.0
+
+plt.subplot(2,1,1)
+
+selection = (df['sim_type'] == 'ode') & \
+            (df['param_type'] == 'react') & \
+            (df['volume_fraction'] == phi) & \
+            (df['seed'] == 1)
+
+plt.plot(df[selection]['time']*1e6,df[selection]['A'] , '--', color='black')
+plt.plot(df[selection]['time']*1e6,df[selection]['C'] , ':', color='black')
+
 for i in range(1,11):
+    selection = (df['sim_type'] == 'geek') & \
+                (df['param_type'] == 'react') & \
+                (df['volume_fraction'] == phi) & \
+                (df['seed'] == i)
+
+    plt.plot(df[selection]['time']*1e6, df[selection]['A'] , '-', color='maroon', alpha=0.5)
+    plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='navy', alpha=0.5)
+
+    selection = (df['sim_type'] == 'openbread') & \
+                (df['param_type'] == 'react') & \
+                (df['volume_fraction'] == phi) & \
+                (df['seed'] == i)
+
+    plt.plot(df[selection]['time']*1e6,df[selection]['A'] , '-', color='firebrick', alpha=0.5)
+    plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='dodgerblue', alpha=0.5)
+
+    selection = (df['sim_type'] == 'brd') & \
+                (df['param_type'] == 'react') & \
+                (df['volume_fraction'] == phi) & \
+                (df['seed'] == i)
+
+    plt.plot(df[selection]['time']*1e6, df[selection]['A'] , '-', color='grey', alpha=0.5)
+    plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='darkgrey', alpha=0.5)
+
+selection = (df['sim_type'] == 'ode') & \
+            (df['param_type'] == 'react') & \
+            (df['volume_fraction'] == phi) & \
+            (df['seed'] == 1)
+
+plt.plot(df[selection]['time']*1e6,df[selection]['A'] , '--', color='black')
+plt.plot(df[selection]['time']*1e6,df[selection]['C'] , ':', color='black')
+
+#plt.xlabel('time in $\mu s$')
+
+plt.ylabel('Number of molecules')
+plt.legend(['A/B MA',
+            'C MA',
+            'A/B openbread',
+            'C openbread',
+            'A/B GEEK',
+            'C GEEK',
+            'A/B RBD',
+            'C RBD',],
+            loc='upper center',
+            bbox_to_anchor=(0.5,1.5),
+            ncol=4)
+
+# Diff lim
+plt.subplot(2,1,2)
+
+selection = (df['sim_type'] == 'ode') & \
+            (df['param_type'] == 'diff') & \
+            (df['volume_fraction'] == phi) & \
+            (df['seed'] == 1)
+
+plt.plot(df[selection]['time']*1e6,df[selection]['A'] , '--', color='black')
+plt.plot(df[selection]['time']*1e6,df[selection]['C'] , ':', color='black')
+
+for i in range(1,11):
+    selection = (df['sim_type'] == 'geek') & \
+                (df['param_type'] == 'diff') & \
+                (df['volume_fraction'] == phi) & \
+                (df['seed'] == i)
+
+    plt.plot(df[selection]['time']*1e6, df[selection]['A'] , '-', color='maroon', alpha=0.5)
+    plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='navy', alpha=0.5)
+
     selection = (df['sim_type'] == 'openbread') & \
                 (df['param_type'] == 'diff') & \
                 (df['volume_fraction'] == phi) & \
@@ -92,14 +170,6 @@ for i in range(1,11):
     plt.plot(df[selection]['time']*1e6, df[selection]['A'] , '-', color='grey', alpha=0.5)
     plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='darkgrey', alpha=0.5)
 
-# for i in range(1,6):
-#     selection = (this_df['sim_type'] == 'gfrd') & \
-#                 (this_df['param_type'] == 'diff') & \
-#                 (this_df['volume_fraction'] == phi) & \
-#                 (this_df['seed'] == i)
-#
-#     plt.plot(df[selection][time],df[selection]['A'] , '-', color='dogerblue', alpha=0.1)
-
 selection = (df['sim_type'] == 'ode') & \
             (df['param_type'] == 'diff') & \
             (df['volume_fraction'] == phi) & \
@@ -110,7 +180,6 @@ plt.plot(df[selection]['time']*1e6,df[selection]['C'] , ':', color='black')
 
 plt.xlabel('time in $\mu s$')
 plt.ylabel('Number of molecules')
-plt.legend(['A openbread', 'C openbread','A RBD', 'C RBD','A Massaction', 'C Massaction'  ])
 
+plt.tight_layout()
 plt.savefig('validation_openbread_dilute.png')
-
