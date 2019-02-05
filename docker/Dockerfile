@@ -52,6 +52,15 @@ ENV PYTHON_INCLUDE='/usr/local/include/python3.5m'
 COPY install_openbread.sh .
 RUN /bin/bash ./install_openbread.sh
 
+#Install miniconda
+COPY install_miniconda.sh .
+RUN /bin/bash install_miniconda.sh
+
+
+#Install readdy
+COPY install_readdy.sh .
+RUN /bin/bash install_readdy.sh
+
 # Make the workspace folder that will link the sources
 RUN mkdir /geek
 

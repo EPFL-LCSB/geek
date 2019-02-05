@@ -206,8 +206,6 @@ def crowder_free_simulation_method(parameters, phi, seed):
     effective_k_binding = gamma * rescaled_keff / (gamma - rescaled_keff)
     effective_k_unbinding = parameters['k_fwd'] * parameters['K_eq']
 
-    particles = {}
-
 
     # Bad scaled check collisions
     def check_collision(particles, position, radius):
@@ -233,7 +231,7 @@ def crowder_free_simulation_method(parameters, phi, seed):
     N_C = round(parameters['C_0'] * parameters['volume'] * AVOGADRO_NUMBER)
 
     print("Add Particles")
-
+    particles = {}
     # Add particles
     N = 1
     position = rnd.uniform(0.0, L, 3)
@@ -270,6 +268,8 @@ def crowder_free_simulation_method(parameters, phi, seed):
                                                             parameters['D_C'] * s2,
                                                             parameters['r_C'] * s)
             N += 1
+
+
     # Recalcualtions
     A = N_crw * R_C / V
     B = 4.0 * np.pi * N_crw * R_C ** 2.0 / V

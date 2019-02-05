@@ -30,11 +30,8 @@ import numpy as np
 import random
 
 from pandas import DataFrame, read_csv
-from geek.analysis import geek_regression
 
 
-import pyximport; pyximport.install(language_level=3)
-from crowder_free import crowder_free_simulation_method
 
 AVOGADRO_NUMBER = 6e23
 
@@ -71,7 +68,8 @@ parameters_diff_lim = {
     'volume': 10e-18,   # L
     't_max': 1e-5,      # s
     'dt': 0.5e-9,       # s
-    'mu_mass': 21.1     # s
+    'mu_mass': 21.1,    # s
+    'du': 1             # kbT
 }
 
 
@@ -98,8 +96,9 @@ parameters_reaction_lim = {
     'C_0': 0,           # M
     'volume': 10e-18,   # L
     't_max': 1e-3,      # s
-    'dt': 0.5e-9,      # s
-    'mu_mass': 21.1     # s
+    'dt': 0.5e-9,       # s
+    'mu_mass': 21.1,    # s
+    'du': 1             # kbT
 }
 
 
@@ -130,6 +129,8 @@ Simulation functions
 """
 
 def geek_simulations(parameters,sim_type,phi= 0.0,seed=1):
+    from geek.analysis import geek_regression
+
     if sim_type == 'diff':
         df = read_csv('../data/validation_diffusion_lim.csv')
     elif sim_type == 'react':
@@ -540,7 +541,7 @@ def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
     return df
 
 def crowder_free_simulation(parameters, phi=0.0, seed=1):
-
+    from crowder_free import crowder_free_simulation_method, particle, check_collision
 
     result = crowder_free_simulation_method(parameters, phi, seed)
 
@@ -549,6 +550,127 @@ def crowder_free_simulation(parameters, phi=0.0, seed=1):
     df = DataFrame(data=data.T, columns = ['time', 'A', 'B', 'C'])
 
     return df
+
+def readdy_simulation(parameters, phi=0.0, seed=1):
+    # Randomized inital conditions
+    random.seed(seed)
+
+    import readdy
+    from crowder_free import particle, check_collision
+
+
+    #Rescale to mum
+    s = 1e6
+    s2 = 1e12
+    s3 = 1e18
+
+    # Box  length
+    L = float(parameters['volume'] / 1000.0) ** (1.0 / 3.0) * s
+
+    # ----- Step 1: Set up reaction diffusion system
+
+    system = readdy.ReactionDiffusionSystem(
+        box_size=(L, L, L),
+        temperature = 310.15)
+
+    system.add_species("A", diffusion_constant=parameters['D_A']*s2)
+    system.add_species("B", diffusion_constant=parameters['D_B']*s2)
+    system.add_species("C", diffusion_constant=parameters['D_C']*s2)
+
+    if phi > 0:
+        R_crw = mass2rad(parameters['mu_mass']) * 1e-9
+        volume_crw = 4.0 / 3.0 * np.pi * R_crw ** 3
+        system.add_species("crw", diffusion_constant=rad2diff(R_crw)*s2)
+
+    # Calc microscopic rate
+    gamma = 4.0*np.pi*(parameters['r_A']+parameters['r_B'])*(parameters['D_A']+parameters['D_B'])*s3
+    rescaled_keff = parameters['k_fwd']/AVOGADRO_NUMBER/1000*s3
+    effective_k_binding = gamma*rescaled_keff/(gamma-rescaled_keff)
+
+
+    system.reactions.add("fwd: A +({}) B -> C".format((parameters['r_A']+parameters['r_B']) * s),
+                         rate=effective_k_binding)
+    system.reactions.add("bwd: C -> A +({}) B".format((parameters['r_A']+parameters['r_B']) * s),
+                         rate=parameters['k_fwd']*parameters['K_eq'] )
+
+    # ----- Step 2: Create simulation instance out of configured system
+
+    simulation = system.simulation(kernel="CPU")
+    simulation.observe.number_of_particles(stride=100,
+                                           types=["A", "B", "C"],
+                                           callback= lambda x: print(x),
+                                           save=False
+                                           )
+
+    N_A = round(parameters['A_0'] * parameters['volume'] * AVOGADRO_NUMBER)
+    N_B = round(parameters['B_0'] * parameters['volume'] * AVOGADRO_NUMBER)
+    N_C = round(parameters['C_0'] * parameters['volume'] * AVOGADRO_NUMBER)
+
+    print("Add Particles")
+    particles = {}
+    # Add particles
+    N = 1
+    position = rnd.uniform(0.0, L, 3)
+    particles[0] = particle(position,
+                            'A',
+                            parameters['D_A'] * s2,
+                            parameters['r_A'] * s)
+
+
+    while N <= N_A:
+        position = rnd.uniform(0, L, 3)
+        if not check_collision(particles, position, parameters['r_A'] * s):
+            particles[max(particles.keys()) + 1] = particle(position,
+                                                            'A',
+                                                            parameters['D_A'] * s2,
+                                                            parameters['r_A'] * s)
+            simulation.add_particle("A", position)
+            N += 1
+
+    N = 0
+
+    while N <= N_B:
+        position = rnd.uniform(0, L, 3)
+        if not check_collision(particles, position, parameters['r_B'] * s):
+            particles[max(particles.keys()) + 1] = particle(position,
+                                                            'B',
+                                                            parameters['D_B'] * s2,
+                                                            parameters['r_B'] * s)
+            simulation.add_particle("B", position)
+            N += 1
+    N = 0
+
+    while N < N_C:
+        position = rnd.uniform(0, L, 3)
+        if not check_collision(particles, position, parameters['r_C'] * s):
+            particles[max(particles.keys()) + 1] = particle(position,
+                                                            'C',
+                                                            parameters['D_C'] * s2,
+                                                            parameters['r_C'] * s)
+            simulation.add_particle("C", position)
+            N += 1
+
+    N = 0
+
+    if phi > 0:
+        N_crw = round(parameters['volume'] / 1000 * phi / volume_crw)
+        while N < N_crw:
+            position = rnd.uniform(0, L, 3)
+            if not check_collision(particles, position, parameters['r_C'] * s):
+                particles[max(particles.keys()) + 1] = particle(position,
+                                                                'C',
+                                                                parameters['D_C'] * s2,
+                                                                parameters['r_C'] * s)
+                simulation.add_particle("crw", position)
+                N += 1
+
+
+    # ------ Step 3: run the simulation
+
+    simulation.run(n_steps=parameters['t_max']/parameters['dt'], timestep=parameters['dt'])
+
+    # TODO return dataframe output
+    pass
 
 """
 Run A simulation
@@ -592,6 +714,8 @@ elif sim_type == 'geek':
     data = geek_simulations(parameters,param_type,phi=phi,seed=seed)
 elif sim_type == 'crwdfree':
     data = crowder_free_simulation(parameters, phi=phi, seed=seed)
+elif sim_type == 'readdy':
+    readdy_simulation(parameters, phi=phi, seed=seed)
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))
 
