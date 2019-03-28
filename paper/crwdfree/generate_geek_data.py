@@ -179,7 +179,7 @@ data = run_simulation(parameters,phi=phi,seed=seed)
 
 
 
-filename = '{}/{}_{}_{}_{}_{}_{}_{}.csv'.format(output,param_type,phi,seed,conc_scaling_A,conc_scaling_B,conc_scaling_C)
+filename = '{}/{}_{}_{}_{}_{}_{}.csv'.format(output,param_type,phi,seed,conc_scaling_A,conc_scaling_B,conc_scaling_C)
 print("Write output_old file {}".format(filename))
 
 data.to_csv(filename)
