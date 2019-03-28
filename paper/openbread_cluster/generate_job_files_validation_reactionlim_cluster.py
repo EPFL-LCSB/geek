@@ -30,7 +30,7 @@ def radius_distribution(radius,mu,sigma):
 
 
 def cpu_time_from_particles(n):
-   cpu_time = (1000.0 + 5*3600/50000*n)*2
+   cpu_time = (1000.0 + 5*3600/50000*n)*30
    return cpu_time
 
 
@@ -42,7 +42,7 @@ volume = 10e-18 # (0.1 mum)^3 in L
 """Parameter to be varied """
 mu_sigma = [(21.1, 0),]
 realizations = 10
-volume_fractions = [0.0,0.1,0.3,]
+volume_fractions = [0.3,]
 
 
 # saturations =  np.arange(0.1,1.0,0.1)

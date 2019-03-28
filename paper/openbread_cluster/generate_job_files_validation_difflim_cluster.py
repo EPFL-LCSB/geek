@@ -8,6 +8,7 @@ from pandas import DataFrame
 import numpy as np
 from scipy.integrate import quad
 import time
+from  datetime import timedelta
 import os
 import sys
 
@@ -30,7 +31,7 @@ def radius_distribution(radius,mu,sigma):
 
 
 def cpu_time_from_particles(n):
-   cpu_time = (1000.0 + 5*3600/50000*n)*2.0
+   cpu_time = (1000.0 + 5*3600/50000*n)*30.0
    return cpu_time
 
 
@@ -42,7 +43,7 @@ volume = 10e-18 # (0.1 mum)^3 in L
 """Parameter to be varied """
 mu_sigma = [(21.1, 0),]
 realizations = 10
-volume_fractions = [0.0,0.1,0.3,]
+volume_fractions = [0.3,]
 
 
 # saturations =  np.arange(0.1,1.0,0.1)
@@ -165,7 +166,7 @@ try:
                                var = this_volume_fraction*volume/(mean_r**3*4/3*np.pi)
                                n += var
 
-                            print('Number of particles {} \t {} \t sigma {}'.format(n,var,thi_sigma))
+                            print('Number of particles {} \t {} \t sigma {} \t time {}'.format(n,var,thi_sigma,timedelta(seconds=cpu_time_from_particles(n))))
                             n_particles.append(n)
 
                             counter += 1
@@ -205,7 +206,7 @@ def chunk_data_frame(this_data_frame,chunksize):
    return data_frames
 
 
-from  datetime import timedelta
+
 
 # Cut the dataframe into input files with n_node*n_cpu jobs
 def write_sbatch_file(data_frame,input_file,folder,this_id,cpu_time):
