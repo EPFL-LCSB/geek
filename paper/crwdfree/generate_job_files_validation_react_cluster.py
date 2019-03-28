@@ -30,7 +30,7 @@ def radius_distribution(radius,mu,sigma):
 
 
 def cpu_time_from_particles(n):
-   cpu_time = (1000.0 + 5*3600/50000*n)*2
+   cpu_time = (1000.0 + 5*3600/50000*n)*2.0
    return cpu_time
 
 
@@ -53,9 +53,9 @@ A_ref = 50e-6
 B_ref = 50e-6
 C_ref = 50e-6
 
-A_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*A_ref
-B_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*B_ref
-C_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*C_ref
+A_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*1.0
+B_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*1.0
+C_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*1.0
 
 
 
@@ -69,13 +69,13 @@ timestamp = time.ctime().replace(" ", "_").replace(":","_")
 # Write all to single data
 cwd = os.getcwd()
 
-input_file = cwd+"/validation_reactionlim_cluster.py"
-folder = cwd+"/input_case_study_reactionlim_"+timestamp+"/"
-log_folder = args[1]+"/out_reaction_"+timestamp
+input_file = cwd+"/validation_difflim_cluster.py"
+folder = cwd+"/input_case_study_difflim_"+timestamp+"/"
+log_folder = args[1]+"/out_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
 
-output = args[1]+"/run_reaction_"+timestamp
+output = args[1]+"/run_"+timestamp
 os.mkdir(output)
 
 job_id = "$SLURM_JOB_ID"
@@ -89,10 +89,9 @@ def round_to_e5(x):
 
 # Coummns ordered according to simulation file
 # docer/work/geek_model/pgm_cluster.py
-columns = ["realization",
+columns =[ "simulation_type" ,
            "volume_fraction",
-           "mu_mass",
-           "sigma_mass",
+           "realization",
            "A_concentration",
            "B_concentration",
            "C_concentration",
@@ -121,11 +120,10 @@ try:
 
                             # Create job File
                             this_job = {}
-
+                            this_job["simulation_type"] = 'diff'
                             this_job["realization"]     = this_realization
                             this_job["volume_fraction"] = this_volume_fraction
-                            this_job["mu_mass"]         = this_mu
-                            this_job["sigma_mass"]      = thi_sigma
+
 
                             if this_A > 0:
                                this_job["A_concentration"]  = round_to_e5(this_A)
@@ -230,7 +228,6 @@ def write_sbatch_file(data_frame,input_file,folder,this_id,cpu_time):
    file_obj.write("module load openblas \n")
    file_obj.write("\n")
    file_obj.write("source /home/weilandt/virtual_env/hsbrd/bin/activate \n")
-   file_obj.write("source /home/weilandt/openfpm_vars \n")
    file_obj.write("\n")
    
    for index, row in data_frame.iterrows():

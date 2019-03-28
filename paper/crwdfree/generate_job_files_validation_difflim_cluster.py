@@ -89,8 +89,9 @@ def round_to_e5(x):
 
 # Coummns ordered according to simulation file
 # docer/work/geek_model/pgm_cluster.py
-columns = ["realization",
+columns =[ "simulation_type" ,
            "volume_fraction",
+           "realization",
            "A_concentration",
            "B_concentration",
            "C_concentration",
@@ -119,11 +120,10 @@ try:
 
                             # Create job File
                             this_job = {}
-
+                            this_job["simulation_type"] = 'diff'
                             this_job["realization"]     = this_realization
                             this_job["volume_fraction"] = this_volume_fraction
-                            this_job["mu_mass"]         = this_mu
-                            this_job["sigma_mass"]      = thi_sigma
+
 
                             if this_A > 0:
                                this_job["A_concentration"]  = round_to_e5(this_A)
