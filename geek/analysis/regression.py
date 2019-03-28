@@ -41,7 +41,7 @@ def geek_regression(df,
     :param concentrations: list of column names of the concentrations
     :param reference_concentrations: numpy array of reference concentrations
     :param rate_constant: column name of the rate constant data
-    :param verbose: True or False print regression output
+    :param verbose: True or False print regression output_old
     :return: A dict with the geek parameters
     """
 

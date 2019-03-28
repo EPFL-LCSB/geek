@@ -1,21 +1,23 @@
+sudo: required
+
+services:
+  - docker
+
 language: python
 python:
-  - "3.4"
   - "3.5"
-  - "3.6"
-
 branches:
  only:
  - master
  - dev
+ - ci
 
 before_install:
- - pip install pytest-cov
-install:
- - pip install -e .
+ - docker pull danielweilandt/geek_docker
+ - docker build -t openbread_geek_ci -f docker/Dockerfile.ci .
 
 script:
- - py.test --cov=./
+ - bash ./docker/run_tests.sh
 
 after_success:
- - pip install codecov; codecov;
+- pip install codecov; codecov;

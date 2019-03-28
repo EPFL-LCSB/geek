@@ -25,12 +25,12 @@ limitations under the License.
 
 """
 
-
+import time as tim
 import numpy as np
 import random
 
 from pandas import DataFrame, read_csv
-from geek.analysis import geek_regression
+
 
 
 AVOGADRO_NUMBER = 6e23
@@ -39,8 +39,7 @@ AVOGADRO_NUMBER = 6e23
 The following script shall provide a validation of GEEK and the brownian reaction dynamics by comparing its results with 
 other approaches for uni-molecular and for bi-molecular reaction
 
-The simulations are conduced using a single sized crowding size for an efficient comparison with the ecell4 BRD
-and the EGFRD 
+We show that the geek frame work is able to capture the behaviour by different simulation techniques
 """
 
 
@@ -65,13 +64,12 @@ parameters_diff_lim = {
     'A_0': 50e-6,       # M
     'B_0': 50e-6,       # M
     'C_0': 0,           # M
-    'volume': 10e-18,   # L
+    'volume': 1e-18,    # L
     't_max': 1e-5,      # s
-    'dt': 0.25e-9,      # s
-    'mu_mass': 21.1     # s
+    'dt': 1.e-9,        # s
+    'mu_mass': 21.1,    # s
+    'du': 1e9           # kbT
 }
-
-
 
 
 """
@@ -95,10 +93,11 @@ parameters_reaction_lim = {
     'A_0': 50e-6,       # M
     'B_0': 50e-6,       # M
     'C_0': 0,           # M
-    'volume': 10e-18,   # L
+    'volume': 1e-18,    # L
     't_max': 1e-3,      # s
-    'dt': 0.25e-9,      # s
-    'mu_mass': 21.1     # s
+    'dt': 1e-9,         # s
+    'mu_mass': 21.1,    # s
+    'du': 1e9           # kbT
 }
 
 
@@ -121,18 +120,38 @@ def rad2diff(radius):
     D = kbT/(6*np.pi*viscosity*radius) #Radius in m
     return D # in m^2/s
 
+from numpy import pi,sqrt,exp
+from scipy.special import erfc
 
+def calc_effective_volume(diffusion, dist, delta_t):
+    """ Normalization factor for Brownian dyanamics simulation """
+
+    # Bi mol rxn scaling
+    sig_2 = 4.0 * delta_t * diffusion
+    sig = sqrt(sig_2)
+
+    exp_4_r_sig = exp(-4.0 * dist ** 2 / sig_2)
+
+    # Expresion
+    A = (sig ** 3 - 2.0 * dist ** 2 * sig) * exp_4_r_sig
+    B = 6.0 * dist ** 2 * sig - sig ** 3 + 4.0 * sqrt(pi) * dist ** 3 * erfc(2.0 * dist / sig)
+
+    effective_volume = 4.0 * pi * (A + B) / 12.0 / sqrt(pi)
+
+    return effective_volume
 
 
 """ 
 Simulation functions
 """
 
-def geek_simulations(parameters,sim_type,phi= 0.0,seed=1):
+def geek_simulations_hardsphere(parameters, sim_type, phi= 0.0, seed=1):
+    from geek.analysis import geek_regression
+
     if sim_type == 'diff':
-        df = read_csv('../data/validation_diffusion_lim.csv')
+        df = read_csv('../data/validation_diffusion_lim_hardsphere.csv')
     elif sim_type == 'react':
-        df = read_csv('../data/validation_reaction_lim.csv')
+        df = read_csv('../data/validation_reaction_lim_hardsphere.csv')
     else:
         raise ValueError('{} is not a valid input'.format(sim_type))
     # Reference concentrations
@@ -235,9 +254,16 @@ def geek_simulations(parameters,sim_type,phi= 0.0,seed=1):
     r = ode(fun).set_integrator('vode', method='bdf')
 
     eps = 1e-3
-    y0 = [parameters['A_0'] * (1. - eps),
-          parameters['B_0'] * (1. - eps),
-          parameters['A_0'] * eps]
+
+    A0 = round(parameters['A_0']*AVOGADRO_NUMBER*parameters['volume'])/AVOGADRO_NUMBER/parameters['volume']
+    B0 = round(parameters['B_0']*AVOGADRO_NUMBER*parameters['volume'])/AVOGADRO_NUMBER/parameters['volume']
+    C0 = round(parameters['C_0']*AVOGADRO_NUMBER*parameters['volume'])/AVOGADRO_NUMBER/parameters['volume']
+
+    print(A0,B0,C0)
+
+    y0 = [A0 * (1. - eps),
+          B0 * (1. - eps),
+          A0 * eps]
     t0 = 0.0
 
     r.set_initial_value(y0, t0).set_f_params(param_dict)
@@ -252,6 +278,7 @@ def geek_simulations(parameters,sim_type,phi= 0.0,seed=1):
     df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
     return df
 
+ 
 def openbread_simulation(parameters, phi= 0.0, seed=1):
 
     from openbread.core import Species,ParticleModel,Reaction
@@ -261,6 +288,7 @@ def openbread_simulation(parameters, phi= 0.0, seed=1):
                 diffusion_constant=parameters['D_A'],
                 collision_radius=parameters['r_A'],
                 mass=parameters['m_A'],)
+
     B = Species(name='B',
                 diffusion_constant=parameters['D_B'],
                 collision_radius=parameters['r_B'],
@@ -286,8 +314,9 @@ def openbread_simulation(parameters, phi= 0.0, seed=1):
     crowding = ParticleModel.Crowding(volume_fraction=phi,
                                       mu=np.log(parameters['mu_mass']),
                                       sigma=0,
-                                      max_size=10e-3)
-
+                                      max_size=3e-3) # For this model the max size is 3nm
+    
+    
     particle_model = ParticleModel(medium,
                                    crowding,
                                    volume)
@@ -300,9 +329,12 @@ def openbread_simulation(parameters, phi= 0.0, seed=1):
     particle_model.initial_conditions['B'] = parameters['B_0']
     particle_model.initial_conditions['C'] = parameters['C_0']
 
+    Nt = parameters['t_max']/parameters['dt']
+
+
     result = particle_model.simulate(dt=parameters['dt'],
                                      max_time=parameters['t_max'],
-                                     log_step=10,
+                                     log_step=max(int(Nt/1000),1),
                                      n_sample=0,
                                      random_seed=seed,
                                      is_hardsphere=True,
@@ -317,199 +349,150 @@ def openbread_simulation(parameters, phi= 0.0, seed=1):
     return df
 
 
-def ecell4_gfrd_simulation(parameters,phi= 0.0, seed=1):
-    from ecell4 import Species, NetworkModel, \
-        create_binding_reaction_rule, create_unbinding_reaction_rule,\
-        Real3,FixedIntervalNumberObserver
-    from ecell4.egfrd import EGFRDWorld, EGFRDSimulator
-    from ecell4.core import GSLRandomNumberGenerator
+def crowder_free_simulation(parameters, phi=0.0, seed=1):
+    from paper.crwdfree.crowder_free_simulation import crowder_free_simulation_method, particle, check_collision
 
-    m = NetworkModel()
-
-    rng = GSLRandomNumberGenerator()
-    rng.seed(seed)
-
-    #Rescale to mum
-    s = 1e6
-    s2 = 1e12
-    s3 = 1e18
-
-    A = Species('A', parameters['r_A']*s, parameters['D_A']*s2)
-    B = Species('B', parameters['r_B']*s, parameters['D_B']*s2)
-    C = Species('C', parameters['r_C']*s, parameters['D_C']*s2)
-
-    if phi > 0:
-        R_crw = mass2rad(parameters['mu_mass'])*1e-9
-        volume_crw = 4.0 / 3.0 * np.pi * R_crw ** 3
-        crw = Species('crw',R_crw*s, rad2diff(R_crw)*s2 )
-
-    gamma = 4.0*np.pi*(parameters['r_A']+parameters['r_B'])*(parameters['D_A']+parameters['D_B'])*s3
-    rescaled_keff = parameters['k_fwd']/AVOGADRO_NUMBER/1000*s3
-
-    effective_k_binding = gamma*rescaled_keff/(gamma-rescaled_keff)
-
-    print(rescaled_keff)
-    print(gamma)
-    print(effective_k_binding)
-    m.add_reaction_rule(create_binding_reaction_rule(A, B, C, rescaled_keff))
-
-    m.add_reaction_rule(create_unbinding_reaction_rule(C, A, B, parameters['k_fwd']*parameters['K_eq']))
-
-    a = (parameters['volume']/1000)**(1/3) * s # in mum
-
-    w=EGFRDWorld(edge_lengths=Real3(a,a,a)) #,rng=rng)
-
-    w.bind_to(m)
-
-    # Add the species in the concentrations
-    N_A = parameters['A_0']*parameters['volume']*AVOGADRO_NUMBER
-    N_B = parameters['B_0']*parameters['volume']*AVOGADRO_NUMBER
-    N_C = parameters['C_0']*parameters['volume']*AVOGADRO_NUMBER
-
-    w.add_molecules(A, N_A)
-    w.add_molecules(B, N_B)
-    w.add_molecules(C, N_C)
-
-
-    # Add crowding species
-    if phi > 0:
-        N_crw = round(parameters['volume']/1000*phi/volume_crw)
-        w.add_molecules(crw, N_crw)
-
-    obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
-    sim = EGFRDSimulator(w)
-    sim.run(parameters['t_max'], obs)
+    result = crowder_free_simulation_method(parameters, phi, seed)
 
     # Write in a data frame
-    data = np.array(obs.data())
-    df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
-
-    return df
-
-def ecell4_brd_simulation(parameters,phi=0.0,seed=1):
-    from ecell4 import Species, NetworkModel, \
-        create_binding_reaction_rule, create_unbinding_reaction_rule,\
-        Real3,FixedIntervalNumberObserver
-    from ecell4.bd import BDWorld, BDSimulator
-    from ecell4.core import GSLRandomNumberGenerator
-
-    m = NetworkModel()
-
-    rng = GSLRandomNumberGenerator()
-    rng.seed(seed)
-
-    #Rescale to mum
-    s = 1e6
-    s2 = 1e12
-    s3 = 1e18
-    A = Species('A', parameters['r_A']*s, parameters['D_A']*s2)
-    B = Species('B', parameters['r_B']*s, parameters['D_B']*s2)
-    C = Species('C', parameters['r_C']*s, parameters['D_C']*s2)
-
-    if phi > 0:
-        R_crw = mass2rad(parameters['mu_mass'])*1e-9
-        volume_crw = 4.0 / 3.0 * np.pi * R_crw ** 3
-        crw = Species('crw',R_crw*s, rad2diff(R_crw)*s2 )
-
-    gamma = 4.0*np.pi*(parameters['r_A']+parameters['r_B'])*(parameters['D_A']+parameters['D_B'])*s3
-    rescaled_keff = parameters['k_fwd']/AVOGADRO_NUMBER/1000*s3
-
-    effective_k_binding = gamma*rescaled_keff/(gamma-rescaled_keff)
-
-    print(rescaled_keff)
-    print(gamma)
-    print(effective_k_binding)
-    m.add_reaction_rule(create_binding_reaction_rule(A, B, C, rescaled_keff))
-
-    m.add_reaction_rule(create_unbinding_reaction_rule(C, A, B, parameters['k_fwd']*parameters['K_eq']))
-
-    a = (parameters['volume'] / 1000) ** (1 / 3) * s  # in m
-    w = BDWorld(Real3(a, a, a), rng=rng)
-    w.bind_to(m)
-
-    # Add the species in the concentrations
-    N_A = parameters['A_0']*parameters['volume']*AVOGADRO_NUMBER
-    N_B = parameters['B_0']*parameters['volume']*AVOGADRO_NUMBER
-    N_C = parameters['C_0']*parameters['volume']*AVOGADRO_NUMBER
-
-
-    w.add_molecules(A, N_A)
-    w.add_molecules(B, N_B)
-    w.add_molecules(C, N_C)
-
-    # Add crowding species
-    if phi > 0:
-        N_crw = round(parameters['volume']/1000*phi/volume_crw)
-        print(N_crw)
-        w.add_molecules(crw, N_crw)
-
-    obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
-    sim = BDSimulator(w)
-    sim.run(parameters['t_max'], obs)
-
-    # Write in a data frame
-    data = np.array(obs.data())
-    df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
+    data = np.array([result.time, result.species['A'], result.species['B'], result.species['C'] ])
+    df = DataFrame(data=data.T, columns = ['time', 'A', 'B', 'C'])
 
     return df
 
 
-def ecell4_ode_simulation(parameters,phi=0.0,seed=1):
-    from ecell4 import Species, NetworkModel, \
-        create_binding_reaction_rule, create_unbinding_reaction_rule,\
-        Real3,FixedIntervalNumberObserver
+def geek_simulations_crwderfree(parameters, sim_type, phi= 0.0, seed=1):
+    from geek.analysis import geek_regression
 
-    from ecell4.ode import ODEWorld, ODESimulator
-    from ecell4.core import GSLRandomNumberGenerator
+    if sim_type == 'diff':
+        df = read_csv('../data/validation_diffusion_lim_hardsphere.csv')
+    elif sim_type == 'react':
+        df = read_csv('../data/validation_reaction_lim_hardsphere.csv')
+    else:
+        raise ValueError('{} is not a valid input'.format(sim_type))
+    # Reference concentrations
+    reference_concentrations = [50e-6,]*3
+    concentrations = ['A_concentration',
+                      'B_concentration',
+                      'C_concentration',]
 
-    m = NetworkModel()
 
-    rng = GSLRandomNumberGenerator()
-    rng.seed(seed)
+    this_df = df[(df['volume_fraction'] == phi)]
 
-    #Rescale to mum
-    s = 1e6
-    s2 = 1e12
-    s3 = 1e18
-    A = Species('A', parameters['r_A']*s, parameters['D_A']*s2)
-    B = Species('B', parameters['r_B']*s, parameters['D_B']*s2)
-    C = Species('C', parameters['r_C']*s, parameters['D_C']*s2)
+    # Extract the GEEK parameters from Linear regression
+    k1_fwd_params = geek_regression(this_df,
+                                      concentrations,
+                                      reference_concentrations,
+                                      'k1_fwd_relative',
+                                      verbose=True)
 
-    gamma = 4.0*np.pi*(parameters['r_A']+parameters['r_B'])*(parameters['D_A']+parameters['D_B'])*s3
-    rescaled_keff = parameters['k_fwd']/AVOGADRO_NUMBER/1000*s3
+    k1_bwd_params = geek_regression(this_df,
+                                      concentrations,
+                                      reference_concentrations,
+                                      'k1_bwd_relative',
+                                      verbose=True)
 
-    effective_k_binding = gamma*rescaled_keff/(gamma-rescaled_keff)
+    random.seed(seed)
+    #Map to parameter dict
+    param_dict = {
+        'k_1f0': parameters['k_fwd'],
+        'k_1b0': parameters['k_fwd']*parameters['K_eq'],
+        'beta_1f': k1_fwd_params['beta_lb'] + (k1_fwd_params['beta_ub'] - k1_fwd_params['beta_lb']) * random.random(),
+        'alpha_A_1f': k1_fwd_params['alpha_A_concentration_lb'] + (
+                k1_fwd_params['alpha_A_concentration_ub'] - k1_fwd_params[
+                'alpha_A_concentration_lb']) * random.random(),
+        'alpha_B_1f': k1_fwd_params['alpha_B_concentration_lb'] + (
+                k1_fwd_params['alpha_B_concentration_ub'] - k1_fwd_params[
+            'alpha_B_concentration_lb']) * random.random(),
+        'alpha_C_1f': k1_fwd_params['alpha_C_concentration_lb'] + (
+                k1_fwd_params['alpha_C_concentration_ub'] - k1_fwd_params[
+            'alpha_C_concentration_lb']) * random.random(),
+        'beta_1b': k1_bwd_params['beta_lb'] + (k1_bwd_params['beta_ub'] - k1_bwd_params['beta_lb']) * random.random(),
+        'alpha_A_1b': k1_bwd_params['alpha_A_concentration_lb'] + (
+                k1_bwd_params['alpha_A_concentration_ub'] - k1_bwd_params[
+            'alpha_A_concentration_lb']) * random.random(),
+        'alpha_B_1b': k1_bwd_params['alpha_B_concentration_lb'] + (
+                k1_bwd_params['alpha_B_concentration_ub'] - k1_bwd_params[
+            'alpha_B_concentration_lb']) * random.random(),
+        'alpha_C_1b': k1_bwd_params['alpha_C_concentration_lb'] + (
+                k1_bwd_params['alpha_C_concentration_ub'] - k1_bwd_params[
+            'alpha_C_concentration_lb']) * random.random(),
+        'A0': reference_concentrations[0],
+        'B0': reference_concentrations[1],
+        'C0': reference_concentrations[2],
+    }
 
-    print(rescaled_keff)
-    print(gamma)
-    print(effective_k_binding)
-    m.add_reaction_rule(create_binding_reaction_rule(A, B, C, rescaled_keff))
+    """
+    Declare ODE-Problem
+    """
+    from sympy import symbols
+    from sympy import exp as sym_exp
 
-    m.add_reaction_rule(create_unbinding_reaction_rule(C, A, B, parameters['k_fwd']*parameters['K_eq']))
+    # Variables
+    A, B, C = symbols(['A', 'B', 'C'])
+    variables = [A, B, C,]
+    # Parameters
+    k_1f0, k_1b0, = symbols(['k_1f0', 'k_1b0',] )
+    # Define symbols for the GEEK parameters
+    beta_1f, beta_1b,  = symbols(['beta_1f', 'beta_1b',] )
+    alpha_A_1f, alpha_A_1b, = symbols(['alpha_A_1f', 'alpha_A_1b',])
+    alpha_B_1f, alpha_B_1b, = symbols(['alpha_B_1f', 'alpha_B_1b',])
+    alpha_C_1f, alpha_C_1b, = symbols(['alpha_C_1f', 'alpha_C_1b',])
+    A0,B0,C0 = symbols(['A0', 'B0', 'C0'])
 
-    a = (parameters['volume'] / 1000) ** (1 / 3) * s  # in m
-    w = ODEWorld(Real3(a, a, a))
-    w.bind_to(m)
+    ode_params = [k_1f0, k_1b0,
+                  beta_1f, beta_1b ,
+                  alpha_A_1b, alpha_A_1f ,
+                  alpha_B_1b, alpha_B_1f,
+                  alpha_C_1f, alpha_C_1b,
+                  A0, B0, C0]
+    # Reactions
 
-    # Add the species in the concentrations
-    N_A = parameters['A_0']*parameters['volume']*AVOGADRO_NUMBER
-    N_B = parameters['B_0']*parameters['volume']*AVOGADRO_NUMBER
-    N_C = parameters['C_0']*parameters['volume']*AVOGADRO_NUMBER
+    geek_reactions = {
+        'r_1f': k_1f0 * A * B * sym_exp(beta_1f) * (A / A0) ** alpha_A_1f * (B / B0) ** alpha_B_1f * (
+                    C / C0) ** alpha_C_1f,
+        'r_1b': k_1b0 * C * sym_exp(beta_1b) * (A / A0) ** alpha_A_1b * (B / B0) ** alpha_B_1b * (
+                    C / C0) ** alpha_C_1b
+    }
 
-    w.add_molecules(A, N_A)
-    w.add_molecules(B, N_B)
-    w.add_molecules(C, N_C)
+    #Expressions
 
-    obs = FixedIntervalNumberObserver(parameters['t_max']/1000.0, ['A', 'B', 'C'])
-    sim = ODESimulator(w)
-    sim.run(parameters['t_max'], obs)
+    expressions = {
+        A: geek_reactions['r_1b'] - geek_reactions['r_1f'],
+        B: geek_reactions['r_1b'] - geek_reactions['r_1f'],
+        C: geek_reactions['r_1f'] - geek_reactions['r_1b'],
+    }
 
-    # Write in a data frame
-    data = np.array(obs.data())
+    from geek.analysis.ode_function import OdeFun
+    fun = OdeFun(variables,ode_params,expressions)
+
+    from scipy.integrate import ode
+    r = ode(fun).set_integrator('vode', method='bdf')
+
+    eps = 1e-3
+
+    A0 = round(parameters['A_0']*AVOGADRO_NUMBER*parameters['volume'])/AVOGADRO_NUMBER/parameters['volume']
+    B0 = round(parameters['B_0']*AVOGADRO_NUMBER*parameters['volume'])/AVOGADRO_NUMBER/parameters['volume']
+    C0 = round(parameters['C_0']*AVOGADRO_NUMBER*parameters['volume'])/AVOGADRO_NUMBER/parameters['volume']
+
+    print(A0,B0,C0)
+
+    y0 = [A0 * (1. - eps),
+          B0 * (1. - eps),
+          A0 * eps]
+    t0 = 0.0
+
+    r.set_initial_value(y0, t0).set_f_params(param_dict)
+    data = []
+
+    scale = parameters['volume']*AVOGADRO_NUMBER
+    while r.successful() and r.t < parameters['t_max']:
+        data.append( np.append(r.t + parameters['t_max']/1000.0,
+                     r.integrate(r.t + parameters['t_max']/1000.0) * scale))
+    data = np.array(data)
+
     df = DataFrame(data=data, columns = ['time', 'A', 'B', 'C'])
-
     return df
-
 
 
 """
@@ -517,13 +500,17 @@ Run A simulation
 """
 import sys
 
+
 #if __name__ is "__main__":
 
-param_type = sys.argv[1]
-sim_type   = sys.argv[2]
-phi        = float(sys.argv[3])
-seed       = int(sys.argv[4])
-output     = sys.argv[5]
+param_type     = sys.argv[1]
+sim_type       = sys.argv[2]
+phi            = float(sys.argv[3])
+seed           = int(sys.argv[4])
+time_scaling   = float(sys.argv[5])
+conc_scaling   = float(sys.argv[6])
+dt_scaling   = float(sys.argv[7])
+output     = sys.argv[8]
 
 
 if param_type == 'diff':
@@ -533,24 +520,31 @@ elif param_type == 'react':
 else:
     raise ValueError('"{}" is not a valid input argument'.format(param_type))
 
-if sim_type == 'ode':
-    data = ecell4_ode_simulation(parameters,phi=phi,seed=seed)
-elif sim_type == 'brd':
-    data = ecell4_brd_simulation(parameters,phi=phi,seed=seed)
-elif sim_type == 'gfrd':
-    data = ecell4_gfrd_simulation(parameters,phi=phi,seed=seed)
-elif sim_type == 'openbread':
+parameters['t_max'] = parameters['t_max']*time_scaling
+parameters['A_0'] = parameters['A_0']*conc_scaling
+parameters['B_0'] = parameters['B_0']*conc_scaling
+parameters['dt'] = parameters['dt']*dt_scaling
+
+if sim_type == 'hsbrd':
     data = openbread_simulation(parameters,phi=phi,seed=seed)
-elif sim_type == 'geek':
-    data = geek_simulations(parameters,param_type,phi=phi,seed=seed)
+elif sim_type == 'geekhs':
+    data = geek_simulations_hardsphere(parameters, param_type, phi=phi, seed=seed)
+elif sim_type == 'crwdfree':
+    data = crowder_free_simulation(parameters, phi=phi, seed=seed)
+elif sim_type == 'geekcf':
+    data = geek_simulations_crwderfree(parameters, phi=phi, seed=seed)
+
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))
 
-
-filename = '{}/{}_{}_{}_{}.csv'.format(output,param_type,sim_type,phi,seed)
-print("Write output file {}".format(filename))
+if time_scaling == 1 and conc_scaling == 1 and dt_scaling == 1:
+    filename = '{}/{}_{}_{}_{}.csv'.format(output, param_type, sim_type, phi, seed)
+else:
+    filename = '{}/{}_{}_{}_{}_{}_{}_{}.csv'.format(output,param_type,sim_type,phi,seed,time_scaling,conc_scaling,dt_scaling)
+print("Write output_old file {}".format(filename))
 
 data.to_csv(filename)
+
 
 
 
