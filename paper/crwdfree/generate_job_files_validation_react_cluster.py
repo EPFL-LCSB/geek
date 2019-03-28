@@ -38,8 +38,7 @@ volume = 10e-18 # (0.1 mum)^3 in L
 """Parameter to be varied """
 mu_sigma = [(21.1, 0),]
 realizations = 10
-volume_fractions = [0.3,]
-
+volume_fractions = [0.0,0.2,0.1,0.3,0.4]
 
 # saturations =  np.arange(0.1,1.0,0.1)
 
@@ -171,7 +170,7 @@ try:
 
                                counter = 0
 
-                               cpu_time = 1000.0 # Seconds 
+                               cpu_time = 60.0 * 70.0 # Seconds
                                cpu_times.append(cpu_time)
 
                                data_frames.append(DataFrame(columns = columns))

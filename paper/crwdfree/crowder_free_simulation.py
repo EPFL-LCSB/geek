@@ -248,6 +248,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
 
 
     #Number ot attempts to test if reaction would be possible for GEEK framework
+
+    # Add the species in the concentrations
+    N_A = np.ceil(parameters['A_0'] * parameters['volume'] * AVOGADRO_NUMBER)
+    N_B = np.ceil(parameters['B_0'] * parameters['volume'] * AVOGADRO_NUMBER)
+    N_C = np.ceil(parameters['C_0'] * parameters['volume'] * AVOGADRO_NUMBER)
+
+
     if is_geek:
         n_attempts = 100
     else:

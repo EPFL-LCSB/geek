@@ -131,19 +131,19 @@ def run_simulation(parameters,phi,seed):
                      seed,
                      0.,
                      phi,
-                     ],])
+                     ],] )
 
-    df = pd.DataFrame(data.T, columns = ['A_concentration',
-                                           'B_concentration',
-                                           'C_concentration',
-                                           'k1_bwd_effective',
-                                           'k1_bwd_relative',
-                                           'k1_fwd_effective',
-                                           'k1_fwd_relative',
-                                           'mu_mass',
-                                           'realization',
-                                           'sigma_mass',
-                                           'volume_fraction'])
+    df = pd.DataFrame(data = data, columns = ['A_concentration',
+                                               'B_concentration',
+                                               'C_concentration',
+                                               'k1_bwd_effective',
+                                               'k1_bwd_relative',
+                                               'k1_fwd_effective',
+                                               'k1_fwd_relative',
+                                               'mu_mass',
+                                               'realization',
+                                               'sigma_mass',
+                                               'volume_fraction'])
     return df
 
 
