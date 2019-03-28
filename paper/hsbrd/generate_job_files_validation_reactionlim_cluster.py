@@ -30,7 +30,7 @@ def radius_distribution(radius,mu,sigma):
 
 
 def cpu_time_from_particles(n):
-   cpu_time = (1000.0 + 5*3600/50000*n)*2.0
+   cpu_time = (1000.0 + 5*3600/50000*n)*2
    return cpu_time
 
 
@@ -69,13 +69,13 @@ timestamp = time.ctime().replace(" ", "_").replace(":","_")
 # Write all to single data
 cwd = os.getcwd()
 
-input_file = cwd+"/validation_difflim_cluster.py"
-folder = cwd+"/input_case_study_difflim_"+timestamp+"/"
-log_folder = args[1]+"/out_"+timestamp
+input_file = cwd+"/validation_reactionlim_cluster.py"
+folder = cwd+"/input_case_study_reactionlim_"+timestamp+"/"
+log_folder = args[1]+"/out_reaction_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
 
-output = args[1]+"/run_"+timestamp
+output = args[1]+"/run_reaction_"+timestamp
 os.mkdir(output)
 
 job_id = "$SLURM_JOB_ID"
@@ -229,7 +229,7 @@ def write_sbatch_file(data_frame,input_file,folder,this_id,cpu_time):
    file_obj.write("module load python/3.6.5 \n")
    file_obj.write("module load openblas \n")
    file_obj.write("\n")
-   file_obj.write("source /home/weilandt/virtual_env/openbread/bin/activate \n")
+   file_obj.write("source /home/weilandt/virtual_env/hsbrd/bin/activate \n")
    file_obj.write("source /home/weilandt/openfpm_vars \n")
    file_obj.write("\n")
    

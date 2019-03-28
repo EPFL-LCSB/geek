@@ -53,6 +53,9 @@ k1b = 10.0      # 1/s
 k2f = 22.0      # 1/s
 k2b = 3.29e5     # 1/Ms
 
+# For Reviwer 2 comments
+k2b = 0.0     # 1/Ms
+
 
 
 reference_concentrations = [pgm*0.5, pgm*0.5, g3p, g2p]
@@ -64,7 +67,7 @@ concentrations = ['enzyme_complex_concentration',
 
 # Filter the data frame for specific condition
 
-this_volume_fraction = 0.1
+this_volume_fraction = 0.0
 this_mu              = 31.9
 this_sigma           = 0.825
 
@@ -241,7 +244,7 @@ for the_p in p:
             ES_qss_val = real(ES_qss_val)
             E_qss_val = param_dict['E_tot'] - ES_qss_val
         else:
-            raise ValueError('Invalid output!')
+            raise ValueError('Invalid output_old!')
 
 
         v_net = geek_reactions['r_2f'] - geek_reactions['r_2b']
@@ -255,4 +258,5 @@ for the_p in p:
         data = np.append(data,np.array([[the_s,the_p,v_net_val]]), axis=0)
 
 df = DataFrame(data=data, columns=['S', 'P', 'v_net'])
+
 
