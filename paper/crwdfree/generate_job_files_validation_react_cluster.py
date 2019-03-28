@@ -64,8 +64,8 @@ timestamp = time.ctime().replace(" ", "_").replace(":","_")
 # Write all to single data
 cwd = os.getcwd()
 
-input_file = cwd+"/validation_difflim_cluster.py"
-folder = cwd+"/input_case_study_difflim_"+timestamp+"/"
+input_file = cwd+"/generate_geek_data.py"
+folder = cwd+"/input_case_study_react_"+timestamp+"/"
 log_folder = args[1]+"/out_"+timestamp
 os.mkdir(log_folder)
 os.mkdir(folder)
@@ -115,7 +115,7 @@ try:
 
                             # Create job File
                             this_job = {}
-                            this_job["simulation_type"] = 'diff'
+                            this_job["simulation_type"] = 'react'
                             this_job["realization"]     = this_realization
                             this_job["volume_fraction"] = this_volume_fraction
 

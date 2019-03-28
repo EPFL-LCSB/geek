@@ -69,7 +69,7 @@ timestamp = time.ctime().replace(" ", "_").replace(":","_")
 # Write all to single data
 cwd = os.getcwd()
 
-input_file = cwd+"/validation_difflim_cluster.py"
+input_file = cwd+"/generate_geek_data.py"
 folder = cwd+"/input_case_study_difflim_"+timestamp+"/"
 log_folder = args[1]+"/out_"+timestamp
 os.mkdir(log_folder)
