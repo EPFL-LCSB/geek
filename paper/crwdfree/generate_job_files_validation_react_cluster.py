@@ -48,9 +48,9 @@ A_ref = 50e-6
 B_ref = 50e-6
 C_ref = 50e-6
 
-A_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*1.0
-B_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*1.0
-C_concentrations = np.array([0.25, 0.5, 1., 2.0, 4.0 ])*1.0
+A_concentrations = np.array([0.25, 0.5, 1., 2.0,])*1.0
+B_concentrations = np.array([0.25, 0.5, 1., 2.0,])*1.0
+C_concentrations = np.array([0.25, 0.5, 1., 2.0,])*1.0
 
 
 

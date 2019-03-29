@@ -244,7 +244,7 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
     V = parameters['volume'] / 1000.0 * s3
     # Box  length
     L = float(parameters['volume'] / 1000.0) ** (1.0 / 3.0) * s
-    rc = 35e-3
+    rc = 6e-3
 
 
     #Number ot attempts to test if reaction would be possible for GEEK framework
@@ -513,19 +513,59 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
                 # Put back
                 particles[i].position = copy.copy( particles[i].position0 )
 
+        if is_geek:
+            # Place the particles back int the box if they have reacted to maintain th
+            # defined state
+            n = sum([1 for p in particles.values() if p.species == 'A'])
+            while n < N_A:
+                position = rnd.uniform(0., L, 3)
+                if not cell_list.check_collision(particles, position, parameters['r_A'] * s, L):
+                    key = max(particles.keys()) + 1
+                    particles[key] = particle(position,
+                                              'A',
+                                              parameters['D_A'] * s2,
+                                              parameters['r_A'] * s)
+                    cell_list.add_particle(particles[key].position, key)
+                    n += 1
+
+            n = sum([1 for p in particles.values() if p.species == 'B'])
+            while n < N_B:
+                position = rnd.uniform(0., L, 3)
+                if not cell_list.check_collision(particles, position, parameters['r_B'] * s, L):
+                    key = max(particles.keys()) + 1
+                    particles[key] = particle(position,
+                                              'B',
+                                              parameters['D_B'] * s2,
+                                              parameters['r_B'] * s)
+                    cell_list.add_particle(particles[key].position, key)
+                    n += 1
+
+            n = sum([1 for p in particles.values() if p.species == 'C'])
+            while n < N_C:
+                position = rnd.uniform(0., L, 3)
+                if not cell_list.check_collision(particles, position, parameters['r_C'] * s, L):
+                    key = max(particles.keys()) + 1
+                    particles[key] = particle(position,
+                                              'C',
+                                              parameters['D_C'] * s2,
+                                              parameters['r_C'] * s)
+                    cell_list.add_particle(particles[key].position, key)
+                    n += 1
+
 
 
         i = min(particles.keys())
         N = max(particles.keys()) + 1
 
+        # Needs to be here becsue acceptance
+        t += parameters['dt'] / N
 
         while i < N:
             # First order reaction
             try:
                 if particles[i].species == 'C':
-
                     # Get Acceptance rate if logging the time
-                    if t >= t_log :
+                    if t >= t_log:
                         for a in range(n_attempts):
                             dist = (parameters['r_A'] + parameters['r_B']) * s
                             r = sample_spherical()
@@ -645,7 +685,7 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
 
 
 
-        t += parameters['dt'] / N
+
         #
 
         #print('{}'.format(t))
@@ -657,13 +697,15 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
             result.species['B'].append(sum([1 for p in particles.values() if p.species == 'B']))
             result.species['C'].append(sum([1 for p in particles.values() if p.species == 'C']))
 
+            print('{}'.format(t_log))
+
             result.acceptance.append(acceptance)
             result.collisions.append(collisions)
             acceptance = 0
             collisions = 0
 
             t_log += dt_log
-            print('{}'.format(t))
+
 
     return result
 
