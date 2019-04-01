@@ -122,7 +122,7 @@ def run_simulation(parameters,phi,seed):
     C = N_crw * R_C ** 2.0 / V
 
     def log_p(r):
-        return log(1.0 - phi) \
+        return mp.log(1.0 - phi) \
                - B * r / (1.0 - phi) \
                - np.pi * 4.0 * A * r**2.0 / (1.0 - phi) \
                - B**2.0 * r**2.0 / (2.0 * (1.0 - phi)**2.0) \
