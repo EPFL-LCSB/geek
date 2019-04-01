@@ -365,9 +365,9 @@ def geek_simulations_crwderfree(parameters, sim_type, phi= 0.0, seed=1):
     from geek.analysis import geek_regression
 
     if sim_type == 'diff':
-        df = read_csv('../data/validation_diffusion_lim_hardsphere.csv')
+        df = read_csv('../data/validation_diffusion_lim_crowderfree.csv')
     elif sim_type == 'react':
-        df = read_csv('../data/validation_reaction_lim_hardsphere.csv')
+        df = read_csv('../data/validation_reaction_lim_crowderfree.csv')
     else:
         raise ValueError('{} is not a valid input'.format(sim_type))
     # Reference concentrations
@@ -532,7 +532,7 @@ elif sim_type == 'geekhs':
 elif sim_type == 'crwdfree':
     data = crowder_free_simulation(parameters, phi=phi, seed=seed)
 elif sim_type == 'geekcf':
-    data = geek_simulations_crwderfree(parameters, phi=phi, seed=seed)
+    data = geek_simulations_crwderfree(parameters, param_type, phi=phi, seed=seed)
 
 else:
     raise ValueError('"{}" is not a valid input argument'.format(sim_type))

@@ -517,6 +517,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
             # Place the particles back int the box if they have reacted to maintain th
             # defined state
             n = sum([1 for p in particles.values() if p.species == 'A'])
+
+            while n > N_A:
+                i, p = random.choice([(i, p) for i, p in particles.items() if p.species == 'A'])
+                n -= 1
+                cell_list.pop_particle(particles[i].position, i)
+                del particles[i]
+
             while n < N_A:
                 position = rnd.uniform(0., L, 3)
                 if not cell_list.check_collision(particles, position, parameters['r_A'] * s, L):
@@ -529,6 +536,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
                     n += 1
 
             n = sum([1 for p in particles.values() if p.species == 'B'])
+
+            while n > N_B:
+                i, p = random.choice([(i, p) for i, p in particles.items() if p.species == 'B'])
+                n -= 1
+                cell_list.pop_particle(particles[i].position, i)
+                del particles[i]
+
             while n < N_B:
                 position = rnd.uniform(0., L, 3)
                 if not cell_list.check_collision(particles, position, parameters['r_B'] * s, L):
@@ -541,6 +555,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
                     n += 1
 
             n = sum([1 for p in particles.values() if p.species == 'C'])
+
+            while n > N_C:
+                i, p = random.choice([(i,p) for i,p in particles.items() if p.species == 'C'] )
+                n -= 1
+                cell_list.pop_particle(particles[i].position,i)
+                del particles[i]
+
             while n < N_C:
                 position = rnd.uniform(0., L, 3)
                 if not cell_list.check_collision(particles, position, parameters['r_C'] * s, L):
@@ -648,6 +669,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
             # Place the particles back int the box if they have reacted to maintain th
             # defined state
             n = sum([1 for p in particles.values() if p.species == 'A'])
+
+            while n > N_A:
+                i, p = random.choice([(i, p) for i, p in particles.items() if p.species == 'A'])
+                n -= 1
+                cell_list.pop_particle(particles[i].position, i)
+                del particles[i]
+
             while n < N_A:
                 position = rnd.uniform(0., L, 3)
                 if not cell_list.check_collision(particles, position, parameters['r_A'] * s, L):
@@ -660,6 +688,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
                     n += 1
 
             n = sum([1 for p in particles.values() if p.species == 'B'])
+
+            while n > N_B:
+                i, p = random.choice([(i, p) for i, p in particles.items() if p.species == 'B'])
+                n -= 1
+                cell_list.pop_particle(particles[i].position, i)
+                del particles[i]
+
             while n < N_B:
                 position = rnd.uniform(0., L, 3)
                 if not cell_list.check_collision(particles, position, parameters['r_B'] * s, L):
@@ -672,6 +707,13 @@ def crowder_free_simulation_method(parameters, phi, seed, is_geek=False, dt_log=
                     n += 1
 
             n = sum([1 for p in particles.values() if p.species == 'C'])
+
+            while n > N_C:
+                i, p = random.choice([(i, p) for i, p in particles.items() if p.species == 'C'])
+                n -= 1
+                cell_list.pop_particle(particles[i].position, i)
+                del particles[i]
+
             while n < N_C:
                 position = rnd.uniform(0., L, 3)
                 if not cell_list.check_collision(particles, position, parameters['r_C'] * s, L):

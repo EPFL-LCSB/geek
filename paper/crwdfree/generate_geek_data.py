@@ -78,7 +78,7 @@ parameters_reaction_lim = {
     'A_0': 50e-6,       # M
     'B_0': 50e-6,       # M
     'C_0': 50e-6,       # M
-    'volume': 1e-18,    # L
+    'volume': 10e-18,    # L
     't_max': 1e-6,      # s
     'dt': 1e-9,         # s
     'mu_mass': 21.1,    # s
@@ -108,16 +108,18 @@ def run_simulation(parameters,phi,seed):
     gamma = 4.0 * np.pi * (parameters['r_A'] + parameters['r_B']) * (parameters['D_A'] + parameters['D_B']) * s3
     rescaled_keff = parameters['k_fwd'] / AVOGADRO_NUMBER / 1000.0 * s3
     effective_k_binding = gamma * rescaled_keff / (gamma - rescaled_keff)
-    effective_k_unbinding = parameters['k_fwd'] * parameters['K_eq']
+
 
     n = round(0.5 * len(result.collisions))
-    reaction_propablity = 1 - np.exp( -effective_k_binding*dt_log/volume_AB)
+
+    reaction_propablity = 1.0 - np.exp( -effective_k_binding*parameters['dt']/volume_AB)
 
     k_1_bwd_eff_rel = np.mean(result.acceptance[n:-1])/100.0/float(result.species['C'][0])
     k_1_bwd_eff = parameters['k_fwd'] * parameters['K_eq'] * k_1_bwd_eff_rel
 
-    k_1_fwd_eff = np.mean(result.collisions[n:-1]) / (dt_log * parameters['A_0'] * parameters['B_0']) \
-                  * reaction_propablity /  (1e-18 * 1000 * AVOGADRO_NUMBER)
+    k_1_fwd_eff = np.mean(result.collisions[n:-1]) / (dt_log * result.species['A'][0] * result.species['B'][0]) \
+                  * reaction_propablity * (parameters['volume'] * AVOGADRO_NUMBER)
+
     k_1_fwd_eff_rel = k_1_fwd_eff / parameters['k_fwd']
 
     data = np.array([[parameters['A_0'],
