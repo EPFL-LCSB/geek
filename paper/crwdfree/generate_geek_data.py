@@ -109,10 +109,33 @@ def run_simulation(parameters,phi,seed):
     rescaled_keff = parameters['k_fwd'] / AVOGADRO_NUMBER / 1000.0 * s3
     effective_k_binding = gamma * rescaled_keff / (gamma - rescaled_keff)
 
+    # Number of crowders
+    R_C = mass2rad(parameters['mu_mass']) * 1e-3
+    volume_crw = 4.0 / 3.0 * np.pi * R_C ** 3
+    N_crw = round(parameters['volume'] / 1000.0 * s3 * phi / volume_crw)
+    # Rescaled volume L > mum*3
+    V = parameters['volume'] / 1000.0 * s3
+
+    # Recalcualtions
+    A = N_crw * R_C / V
+    B = 4.0 * np.pi * N_crw * R_C ** 2.0 / V
+    C = N_crw * R_C ** 2.0 / V
+
+    def log_p(r):
+        return log(1.0 - phi) \
+               - B * r / (1.0 - phi) \
+               - np.pi * 4.0 * A * r**2.0 / (1.0 - phi) \
+               - B**2.0 * r**2.0 / (2.0 * (1.0 - phi)**2.0) \
+               - 4.0 * np.pi / 3.0 * (N_crw / (V * (1.0 - phi)) + B ** 2.0 * C / (3.0 * (1.0 - phi) ** 3.0) + A * B / (
+                    1.0 - phi)**2.0) * r**3.0
+
+    # P(legal for C)
+    p_C = np.exp(log_p(parameters['r_C'] * s))
+
 
     n = round(0.5 * len(result.collisions))
 
-    reaction_propablity = 1.0 - np.exp( -effective_k_binding*parameters['dt']/volume_AB)
+    reaction_propablity = (1.0 - np.exp( -effective_k_binding*parameters['dt']/volume_AB))*(1.0 - p_C)
 
     k_1_bwd_eff_rel = np.mean(result.acceptance[n:-1])/100.0/float(result.species['C'][0])
     k_1_bwd_eff = parameters['k_fwd'] * parameters['K_eq'] * k_1_bwd_eff_rel
