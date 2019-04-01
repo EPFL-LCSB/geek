@@ -103,7 +103,7 @@ def run_simulation(parameters,phi,seed):
     # Reaction volume
     volume_AB = calc_effective_volume((parameters['D_A'] + parameters['D_B'])*s2,
                                       (parameters['r_A'] + parameters['r_B'])*s,
-                                      dt_log)
+                                      parameters['dt'])
     #
     gamma = 4.0 * np.pi * (parameters['r_A'] + parameters['r_B']) * (parameters['D_A'] + parameters['D_B']) * s3
     rescaled_keff = parameters['k_fwd'] / AVOGADRO_NUMBER / 1000.0 * s3
