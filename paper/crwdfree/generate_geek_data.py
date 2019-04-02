@@ -135,7 +135,7 @@ def run_simulation(parameters,phi,seed):
 
     n = round(0.5 * len(result.collisions))
 
-    reaction_propablity = (1.0 - np.exp( -effective_k_binding*parameters['dt']/volume_AB))*(1.0 - p_C)
+    reaction_propablity = (1.0 - np.exp( -effective_k_binding*parameters['dt']/volume_AB))*p_C
 
     k_1_bwd_eff_rel = np.mean(result.acceptance[n:-1])/100.0/float(result.species['C'][0])
     k_1_bwd_eff = parameters['k_fwd'] * parameters['K_eq'] * k_1_bwd_eff_rel
