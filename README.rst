@@ -1,6 +1,8 @@
 GEEK
 =====
 
+|license| |Build Status|
+
 GEneralized Elementary Kinetics
 
 Implements the GEEK analysis as described in : Daniel R. Weilandt and Vassily
