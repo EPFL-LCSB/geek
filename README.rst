@@ -48,7 +48,7 @@ This module requires |OPENBREAD|_ to work properly.
 .. |OPENBREAD| replace:: ``OPENBReaD``
 .. _OPENBREAD: https://github.com/EPFL-LCSB/openbread/tree/master
 
-Further the following pip-python packages are required:
+Further the following pip-python packages are required
     - sympy >= 1.1.
     - pytest
     - scipy
