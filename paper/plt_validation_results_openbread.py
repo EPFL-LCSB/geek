@@ -87,7 +87,7 @@ Time plot
 phi = 0.0
 
 for i in range(1,11):
-    selection = (df['sim_type'] == 'geekcf') & \
+    selection = (df['sim_type'] == 'geek') & \
                 (df['param_type'] == 'react') & \
                 (df['volume_fraction'] == phi) & \
                 (df['seed'] == i)
@@ -95,7 +95,7 @@ for i in range(1,11):
     ax1.plot(df[selection]['time']*1e6, df[selection]['A']*s , '-', color='blue', alpha=0.5)
 #    plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='navy', alpha=0.5)
 
-    selection = (df['sim_type'] == 'crwdfree') & \
+    selection = (df['sim_type'] == 'openbread') & \
                 (df['param_type'] == 'react') & \
                 (df['volume_fraction'] == phi) & \
                 (df['seed'] == i)
@@ -106,7 +106,7 @@ for i in range(1,11):
 
 
 for i in range(1,11):
-    selection = (df['sim_type'] == 'geekcf') & \
+    selection = (df['sim_type'] == 'geek') & \
                 (df['param_type'] == 'diff') & \
                 (df['volume_fraction'] == phi) & \
                 (df['seed'] == i)
@@ -114,7 +114,7 @@ for i in range(1,11):
     ax3.plot(df[selection]['time']*1e6, df[selection]['A']*s , '-', color='blue', alpha=0.5)
     #plt.plot(df[selection]['time']*1e6, df[selection]['C'], '-', color='navy', alpha=0.5)
 
-    selection = (df['sim_type'] == 'crwdfree') & \
+    selection = (df['sim_type'] == 'openbread') & \
                 (df['param_type'] == 'diff') & \
                 (df['volume_fraction'] == phi) & \
                 (df['seed'] == i)
@@ -130,7 +130,7 @@ for i in range(1,11):
 Reaction controlled
 """
 
-selection = (df['sim_type'] == 'crwdfree') & \
+selection = (df['sim_type'] == 'openbread') & \
             (df['param_type'] == 'react') & \
             (df['time'] > 1e-3*0.5)
 
@@ -145,7 +145,7 @@ yu = grouped_df.quantile(0.75)['A'].values - y
 ax2.errorbar(x, y, yerr=[yl.T,yu.T], color='firebrick', fmt='o', fillstyle='none')
 
 
-selection = (df['sim_type'] == 'geekcf') & \
+selection = (df['sim_type'] == 'geek') & \
             (df['param_type'] == 'react') & \
             (df['time'] > 1e-3*0.5)
 
@@ -165,7 +165,7 @@ Difusion controlled
 """
 
 
-selection = (df['sim_type'] == 'crwdfree') & \
+selection = (df['sim_type'] == 'openbread') & \
             (df['param_type'] == 'diff') & \
             (df['time'] > 1e-5*0.5)
 
@@ -180,7 +180,7 @@ yu = grouped_df.quantile(0.75)['A'].values - y
 ax4.errorbar(x, y, yerr=[yl.T,yu.T], color='firebrick', fmt='o', fillstyle='none')
 
 
-selection = (df['sim_type'] == 'geekcf') & \
+selection = (df['sim_type'] == 'geek') & \
             (df['param_type'] == 'diff') & \
             (df['time'] > 1e-5*0.5)
 
@@ -216,7 +216,7 @@ ax1.set_xlim([0, 1000])
 ax4.set_xlabel('$\phi$')
 
 plt.tight_layout()
-plt.savefig('verification_crowderfree_concentration.png', ppi=1200)
+plt.savefig('verification_openbread_concentration.png', ppi=1200)
 
 
 
@@ -252,7 +252,7 @@ def get_initial_rates(df,species):
             a0 = df[selection][species].loc[ix_min]
             a1 = df[selection][species].loc[ix_max]
 
-            v_init = (a1 - a0) / (t_max - t_min) / (1e-18*AVOGADRO_NUMBER) * 1e6 # in mM
+            v_init = (a1 - a0) / (t_max - t_min)
 
             data = dict(v_init= - v_init,
                         volume_fraction=volume_fraction,
@@ -278,44 +278,43 @@ def get_initial_rates(df,species):
 f, (ax1, ax2, ) = plt.subplots(1,2, sharex=True, figsize=(6,3) )
 
 
-selection = (df['sim_type'] == 'crwdfree') & \
+selection = (df['sim_type'] == 'openbread') & \
             (df['param_type'] == 'react') & \
-            (df['time'] < 1e-3*0.1)
+            (df['time'] < 1e-3*0.05)
 
 x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
 ax1.errorbar(x, y, yerr=[dyl,dyu], color='firebrick', fmt='o', fillstyle='none')
 
 
-# selection = (df['sim_type'] == 'geekcf') & \
-#             (df['param_type'] == 'react') & \
-#             (df['time'] < 1e-3*0.1)
-#
-# x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
-# ax1.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='o', fillstyle='none')
+selection = (df['sim_type'] == 'geek') & \
+            (df['param_type'] == 'react') & \
+            (df['time'] < 1e-3*0.05)
+
+x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
+ax1.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='o', fillstyle='none')
 
 
 
-
-selection = (df['sim_type'] == 'crwdfree') & \
+selection = (df['sim_type'] == 'openbread') & \
             (df['param_type'] == 'diff') & \
-            (df['time'] < 1e-3*0.1)
+            (df['time'] < 1e-5*0.05)
 
 x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
 ax2.errorbar(x, y, yerr=[dyl,dyu], color='firebrick', fmt='o', fillstyle='none')
 
 
-# selection = (df['sim_type'] == 'geekcf') & \
-#             (df['param_type'] == 'diff') & \
-#             (df['time'] < 1e-3*0.1)
-#
-# x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
-# ax2.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='o', fillstyle='none')
+selection = (df['sim_type'] == 'geek') & \
+            (df['param_type'] == 'diff') & \
+            (df['time'] < 1e-5*0.05)
+
+x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
+ax2.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='o', fillstyle='none')
 
 
-ax1.set_ylabel('$\Delta$[A]/$\Delta t$ / [mM $\\mathrm{s^{-1}}$ ]')
+ax1.set_ylabel('$\Delta$[A]/$\Delta t$ / [$\mu$M $\\mathrm{s^{-1}}$ ]')
 
 ax1.set_xlabel('$\phi$')
 ax2.set_xlabel('$\phi$')
 
 plt.tight_layout()
-plt.savefig('verification_crowderfree_initial_rate.png', ppi=1200)
+plt.savefig('verification_openbread_initial_rate.png', ppi=1200)
