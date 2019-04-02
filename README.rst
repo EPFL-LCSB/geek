@@ -1,7 +1,7 @@
 GEEK
 =====
 
-|license| |Build Status|
+|Build Status| |Codacy branch grade| |license| 
 
 GEneralized Elementary Kinetics
 
@@ -81,3 +81,5 @@ The software in this repository is put under an APACHE-2.0 licensing scheme - pl
    :target: https://github.com/EPFL-LCSB/geek/blob/master/LICENSE.txt
 .. |Build Status| image:: https://travis-ci.org/EPFL-LCSB/geek.svg?branch=master
    :target: https://travis-ci.org/EPFL-LCSB/geek
+.. |Codacy branch grade| image:: https://img.shields.io/codacy/grade/79ebfa4066484c8883eb07c4d6dcd191/master.svg
+   :target: https://www.codacy.com/app/realLCSB/geek
