@@ -1,6 +1,8 @@
 GEEK
 =====
 
+|license| |Build Status|
+
 GEneralized Elementary Kinetics
 
 Implements the GEEK analysis as described in : Daniel R. Weilandt and Vassily
@@ -73,3 +75,9 @@ License
 ========
 
 The software in this repository is put under an APACHE-2.0 licensing scheme - please see the `LICENSE <https://github.com/EPFL-LCSB/geek/blob/master/LICENSE.txt>`_ file for more details.
+
+
+.. |license| image:: http://img.shields.io/badge/license-APACHE2-blue.svg
+   :target: https://github.com/EPFL-LCSB/geek/blob/master/LICENSE.txt
+.. |Build Status| image:: https://travis-ci.org/EPFL-LCSB/geek.svg?branch=master
+   :target: https://travis-ci.org/EPFL-LCSB/geek
