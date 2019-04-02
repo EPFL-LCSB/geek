@@ -7,13 +7,6 @@ Implements the GEEK analysis as described in : Daniel R. Weilandt and Vassily
 Hatzimanikatis. "Particle-based simulation reveals macromolecular crowding effects on the Michaelis-Menten mechanism",
 bioRxiv 429316; doi: `https://doi.org/10.1101/429316`_
 
-Requirements
-------------
-
-**This module was developed in Python 3.5, and it is recommended to run Python 3.5
-
-This module requires as working installation of openbread.
-
 
 Setup
 =====
@@ -38,9 +31,27 @@ If you wish not to use the container based install you can install the package f
 
 .. code:: bash
 
-    git clone https://github.com/EPFL-LCSB/pytfa.git /path/to/geek
+    git clone https://github.com/EPFL-LCSB/geek.git /path/to/geek
     pip3 install -e /path/to/geek
 
+
+Requirements
+------------
+
+This module was developed in Python 3.5, and it is recommended to run Python 3.5.
+The module also was tested in Python 3.6.
+
+This module requires |OPENBREAD|_ to work properly.
+
+.. |OPENBREAD| replace:: ``OPENBReaD``
+.. _OPENBREAD: https://github.com/EPFL-LCSB/openbread/tree/master
+
+Further the following pip-python packages are required:
+    - sympy >= 1.1.
+    - pytest
+    - scipy
+    - pandas
+    - statsmodels
 
 
 Examples and Validation
