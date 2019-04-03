@@ -61,6 +61,14 @@ def geek_regression(df,
     # Group the values by their fitted value -> split in 10 groups
     ols_resid['value_groups'] = (ols_resid['fittedvalues'] / max(abs(ols_resid['fittedvalues']))).round(1)
 
+    num = 9.0
+    #Count groups and check weather minimum 3 entries are in one group
+    while min(ols_resid.groupby('value_groups')['residuals'].size()) < 3:
+        ols_resid['value_groups'] = (ols_resid['fittedvalues'] / max(abs(ols_resid['fittedvalues'])) * num ).round(0) / num
+        num -= 1.0
+        if num < 1:
+            raise ValueError("To little data")
+
     # Calculate the conditional standard deviation of the fitted values
     conditional_std = ols_resid.groupby('value_groups')['residuals'].std()
     ols_resid['std'] = np.repeat(np.NaN, len(ols_resid))
@@ -68,7 +76,7 @@ def geek_regression(df,
         ols_resid['std'][ols_resid['value_groups'] == this_group] = conditional_std.ix[this_group]
 
     # Fit with weights antiproportinal to the standart deviation
-    weights = 1.0 / ols_resid['std']
+    weights = 1.0/ols_resid['std']
 
     # Fit the model
     this_lin_model = statsmodels.WLS(Y, X, weights=weights)
