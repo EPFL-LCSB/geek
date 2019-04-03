@@ -280,36 +280,36 @@ f, (ax1, ax2, ) = plt.subplots(1,2, sharex=True, figsize=(6,3) )
 
 selection = (df['sim_type'] == 'crwdfree') & \
             (df['param_type'] == 'react') & \
-            (df['time'] < 1e-3*0.1)
+            (df['time'] < 1e-3*0.05)
 
 x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
 ax1.errorbar(x, y, yerr=[dyl,dyu], color='firebrick', fmt='o', fillstyle='none')
 
 
-# selection = (df['sim_type'] == 'geekcf') & \
-#             (df['param_type'] == 'react') & \
-#             (df['time'] < 1e-3*0.1)
-#
-# x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
-# ax1.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='o', fillstyle='none')
+selection = (df['sim_type'] == 'geekcf') & \
+            (df['param_type'] == 'react') & \
+            (df['time'] < 1e-3*0.05)
+
+x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
+ax1.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='s', fillstyle='none')
 
 
 
 
 selection = (df['sim_type'] == 'crwdfree') & \
             (df['param_type'] == 'diff') & \
-            (df['time'] < 1e-3*0.1)
+            (df['time'] < 1e-3*0.05)
 
 x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
 ax2.errorbar(x, y, yerr=[dyl,dyu], color='firebrick', fmt='o', fillstyle='none')
 
 
-# selection = (df['sim_type'] == 'geekcf') & \
-#             (df['param_type'] == 'diff') & \
-#             (df['time'] < 1e-3*0.1)
-#
-# x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
-# ax2.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='o', fillstyle='none')
+selection = (df['sim_type'] == 'geekcf') & \
+            (df['param_type'] == 'diff') & \
+            (df['time'] < 1e-3*0.05)
+
+x,y,dyl,dyu = get_initial_rates(df[selection], 'A')
+ax2.errorbar(x, y, yerr=[dyl,dyu], color='blue', fmt='s', fillstyle='none')
 
 
 ax1.set_ylabel('$\Delta$[A]/$\Delta t$ / [mM $\\mathrm{s^{-1}}$ ]')
