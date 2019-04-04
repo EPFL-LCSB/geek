@@ -14,7 +14,7 @@ branches:
 
 before_install:
  - docker pull danielweilandt/geek_docker
- - docker build -t openbread_geek_ci -f docker/Dockerfile.ci .
+ - docker build -t geek_docker_ci -f docker/Dockerfile.ci .
 
 script:
  - bash ./docker/run_tests.sh
