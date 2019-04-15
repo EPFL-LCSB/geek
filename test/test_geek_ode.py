@@ -33,7 +33,7 @@ from geek.analysis import geek_regression
 
 seed = 1
 
-df = read_csv('/geek/data/result_full_factorial_pgm.csv')
+df = read_csv('./../data/result_full_factorial_pgm.csv')
 
 # Reference concentrations
 pgm = 64e-6
